@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Alert, TouchableOpacity } from 'react-native';
+import { View, Text, TextInput, StyleSheet, Alert, TouchableOpacity, ScrollView, Platform } from 'react-native';
+import { Picker } from '@react-native-picker/picker';
 
 const RegisterPage = ({navigation}) => {
   const [firstName, setFirstName] = useState('');
@@ -9,16 +10,14 @@ const RegisterPage = ({navigation}) => {
   const [password, setPassword] = useState('');
   const [repeatPassword, setRepeatPassword] = useState('');
   const [birthDate, setBirthDate] = useState('');
-  const [passwordsMatch, setPasswordsMatch] = useState(true);
+  const [membershipType, setMembershipType] = useState('full');
 
   const handleSubmit = async () => {
     if (password !== repeatPassword) {
-      setPasswordsMatch(false);
+      Alert.alert('Error', 'Passwords do not match');
       return;
     }
-  
-    setPasswordsMatch(true);
-  
+
     try {
       const response = await fetch('http://localhost:3000/register', {
         method: 'POST',
@@ -31,13 +30,13 @@ const RegisterPage = ({navigation}) => {
           username,
           phoneNumber,
           password,
-          repeatPassword,
-          birthDate
+          birthDate,
+          membershipType
         }),
       });
-  
+
       const data = await response.json();
-  
+
       if (response.status === 201) {
         Alert.alert('Registration Successful', 'You have successfully registered!');
         navigation.navigate('Login');
@@ -48,10 +47,9 @@ const RegisterPage = ({navigation}) => {
       Alert.alert('Error', 'Something went wrong');
     }
   };
-  
 
   return (
-    <View style={styles.container}>
+    <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Register</Text>
       <TextInput
         style={styles.input}
@@ -71,52 +69,58 @@ const RegisterPage = ({navigation}) => {
         value={username}
         onChangeText={setUsername}
         autoCapitalize="none"
-        keyboardType="email-address"
-      />
-       <TextInput
-        style={styles.input}
-        placeholder="Birth Date (DD-MM-YYYY)"
-        value={birthDate}
-        onChangeText={setBirthDate}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Phone Number"
-        value={phoneNumber}
-        onChangeText={setPhoneNumber}
       />
       <TextInput
         style={styles.input}
         placeholder="Password"
         value={password}
         onChangeText={setPassword}
-        // secureTextEntry={true}
+        secureTextEntry={true}
       />
-      {!passwordsMatch && (
-        <Text style={styles.errorText}>Passwords do not match</Text>
-      )}
       <TextInput
         style={styles.input}
         placeholder="Repeat Password"
         value={repeatPassword}
         onChangeText={setRepeatPassword}
-        // secureTextEntry={true}
+        secureTextEntry={true}
       />
-    
+      <TextInput
+        style={styles.input}
+        placeholder="Phone Number"
+        value={phoneNumber}
+        onChangeText={setPhoneNumber}
+        keyboardType="phone-pad"
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Birth Date (DD/MM/YYYY)"
+        value={birthDate}
+        onChangeText={setBirthDate}
+      />
+      <View style={styles.inputContainer}>
+        <Picker
+          selectedValue={membershipType}
+          style={styles.picker}
+          onValueChange={(itemValue) => setMembershipType(itemValue)}
+        >
+          <Picker.Item label="Full Membership" value="full" />
+          <Picker.Item label="Partial Membership" value="partial" />
+        </Picker>
+      </View>
       <TouchableOpacity style={styles.button} onPress={handleSubmit}>
         <Text style={styles.buttonText}>Submit</Text>
       </TouchableOpacity>
-    </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 16,
-    backgroundColor: '#f5f5f5', // Lighter background color
+    padding: 20,
+    backgroundColor: '#f5f5f5',
   },
   title: {
     fontSize: 28,
@@ -124,9 +128,13 @@ const styles = StyleSheet.create({
     marginBottom: 30,
     color: '#333',
   },
+  inputContainer: {
+    width: '100%',
+    marginBottom: 15,
+  },
   input: {
-    width: 300, // Fixed width
-    height: 50, // Fixed height
+    width: '100%',
+    height: 50,
     borderColor: '#cccccc',
     borderWidth: 1,
     marginBottom: 15,
@@ -135,23 +143,35 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     fontSize: 16,
   },
+  picker: {
+    width: '100%',
+    height: 50,
+    borderColor: '#cccccc',
+    borderWidth: 1,
+    borderRadius: 8,
+    backgroundColor: '#fff',
+    ...Platform.select({
+      web: {
+        outlineStyle: 'none',
+        appearance: 'none',
+        paddingHorizontal: 15,
+        paddingRight: 30, // Space for the dropdown arrow
+      },
+    }),
+  },
   button: {
-    backgroundColor: '#007BFF', // Button color
+    backgroundColor: '#007BFF',
     paddingVertical: 15,
     paddingHorizontal: 20,
     borderRadius: 8,
-    width: 200, // Width of the button
+    width: '100%',
     alignItems: 'center',
     marginVertical: 10,
   },
   buttonText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
-  },
-  errorText: {
-    color: 'red',
-    marginBottom: 10,
   },
 });
 

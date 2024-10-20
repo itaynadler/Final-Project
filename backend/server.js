@@ -4,6 +4,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 require('dotenv').config();
 const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
 // Initialize express app
 const app = express();
 const port = process.env.PORT || 3000;
@@ -51,12 +52,12 @@ connectDB().then(() => {
 // Add User model
 const User = require('./models/User');
 
-// Update the login route to include isAdmin in the response
+// Update the login route
 app.post('/login', async (req, res) => {
   const { username, password } = req.body;
 
   try {
-    const user = await User.findOne({ username, password });
+    const user = await User.findOne({ username, password }); // Compare plain text passwords
     if (user) {
       res.status(200).json({ message: 'Login Successful', user: { id: user._id, username: user.username, isAdmin: user.isAdmin } });
     } else {
@@ -68,9 +69,9 @@ app.post('/login', async (req, res) => {
   }
 });
 
-// Simplify the registration route
+// Update the registration route
 app.post('/register', async (req, res) => {
-  const { username, password } = req.body;
+  const { firstName, lastName, username, password, phoneNumber, birthDate, membershipType } = req.body;
 
   try {
     let user = await User.findOne({ username });
@@ -78,7 +79,15 @@ app.post('/register', async (req, res) => {
       return res.status(400).json({ message: 'User already exists' });
     }
 
-    user = new User({ username, password });
+    user = new User({
+      firstName,
+      lastName,
+      username,
+      password, // Store password as plain text (not recommended for production)
+      phoneNumber,
+      birthDate: new Date(birthDate),
+      membershipType
+    });
     await user.save();
 
     res.status(201).json({ message: 'Registration successful', user: { id: user._id, username: user.username } });
