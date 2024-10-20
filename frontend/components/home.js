@@ -5,6 +5,7 @@ import HomeScreen from './homescreen'; // Import HomeScreen component
 import SchedulePage from './schedule'; // Import SchedulePage
 import VideosPage from './video'; // Placeholder for videos
 import ProfilePage from './profile'; // Placeholder for profile
+import BookingsPage from './BookingsPage'; // Import the new BookingsPage
 
 // Placeholder components for other screens
 const Videos = () => (
@@ -34,6 +35,8 @@ const HomePage = () => {
             iconName = 'calendar-outline';
           } else if (route.name === 'Profile') {
             iconName = 'person-outline';
+          } else if (route.name === 'Bookings') {
+            iconName = 'bookmark-outline';
           }
 
           return <Icon name={iconName} size={size} color={color} />;
@@ -45,8 +48,9 @@ const HomePage = () => {
     >
       <Tab.Screen name="HomeScreen" component={HomeScreen} options={{ title: 'Home' }} />
       <Tab.Screen name="Schedule" component={SchedulePage} />
-      <Tab.Screen name="Videos" component={Videos} />
-      <Tab.Screen name="Profile" component={Profile} />
+      <Tab.Screen name="Bookings" component={BookingsPage} />
+      <Tab.Screen name="Videos" component={VideosPage} />
+      <Tab.Screen name="Profile" component={ProfilePage} />
     </Tab.Navigator>
   );
 };

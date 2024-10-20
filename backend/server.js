@@ -68,13 +68,48 @@ app.post('/register', async (req, res) => {
   }
 });
 
-// Mock database for workouts
+// Mock database for workouts (updated with more details)
 let workouts = [
-  { id: '1', title: 'Hybrid Training', attendees: [] },
-  { id: '2', title: 'Yoga Vinyasa', attendees: [] },
-  { id: '3', title: 'Mat Pilates', attendees: [] },
-  { id: '4', title: 'Hybrid Training', attendees: [] }
+  { id: '1', title: 'Hybrid Training', instructor: 'John Doe', date: '2024-03-25', time: '08:00', capacity: 20, attendees: [] },
+  { id: '2', title: 'Yoga Vinyasa', instructor: 'Jane Smith', date: '2024-03-25', time: '10:00', capacity: 15, attendees: [] },
+  { id: '3', title: 'Mat Pilates', instructor: 'Mike Johnson', date: '2024-03-26', time: '09:00', capacity: 12, attendees: [] },
+  { id: '4', title: 'Hybrid Training', instructor: 'Sarah Brown', date: '2024-03-26', time: '18:00', capacity: 20, attendees: [] }
 ];
+
+// Endpoint to get all workouts
+app.get('/workouts', (req, res) => {
+  res.json(workouts);
+});
+
+// Endpoint to book a workout
+app.post('/book', (req, res) => {
+  const { workoutId, userId } = req.body;
+
+  const workout = workouts.find(w => w.id === workoutId);
+
+  if (!workout) {
+    return res.status(404).json({ message: 'Workout not found' });
+  }
+
+  if (workout.attendees.includes(userId)) {
+    return res.status(400).json({ message: 'You are already booked for this workout' });
+  }
+
+  if (workout.attendees.length >= workout.capacity) {
+    return res.status(400).json({ message: 'This workout is fully booked' });
+  }
+
+  workout.attendees.push(userId);
+
+  res.status(200).json({ message: `Successfully booked ${workout.title}`, workout });
+});
+
+// Endpoint to get user's bookings
+app.get('/bookings/:userId', (req, res) => {
+  const userId = req.params.userId;
+  const userBookings = workouts.filter(workout => workout.attendees.includes(userId));
+  res.json(userBookings);
+});
 
 // Sign-up route for workouts
 app.post('/signup', (req, res) => {
@@ -97,6 +132,26 @@ app.post('/signup', (req, res) => {
   workout.attendees.push(userId);
 
   res.status(200).json({ message: `Successfully signed up for ${workout.title}` });
+});
+
+// Endpoint to delete a booking
+app.delete('/bookings/:userId/:workoutId', (req, res) => {
+  const { userId, workoutId } = req.params;
+
+  const workout = workouts.find(w => w.id === workoutId);
+
+  if (!workout) {
+    return res.status(404).json({ message: 'Workout not found' });
+  }
+
+  const attendeeIndex = workout.attendees.indexOf(userId);
+  if (attendeeIndex === -1) {
+    return res.status(400).json({ message: 'You are not booked for this workout' });
+  }
+
+  workout.attendees.splice(attendeeIndex, 1);
+
+  res.status(200).json({ message: `Successfully cancelled booking for ${workout.title}`, workout });
 });
 
 // Start the server
