@@ -1,14 +1,15 @@
 // server.js
 const express = require('express');
 const bodyParser = require('body-parser');
-const mongoose = require('mongoose');
+const cors = require('cors');
 require('dotenv').config();
-
+const mongoose = require('mongoose');
 // Initialize express app
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Middleware for parsing JSON bodies
+// Middleware
+app.use(cors());
 app.use(bodyParser.json());
 
 // MongoDB connection
@@ -29,6 +30,10 @@ connectDB();
 
 // Mock user data (you can replace this with a database later)
 const users = [];
+
+app.get('/health_check', (req, res) => {
+  res.status(200).json({ message: 'Server is healthy' });
+});
 
 // Login route
 app.post('/login', (req, res) => {
@@ -79,7 +84,6 @@ app.post('/register', (req, res) => {
 
   res.status(201).json({ message: 'Registration successful', user: newUser });
 });
-
 
 // Mock database for workouts
 let workouts = [
