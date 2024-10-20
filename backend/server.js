@@ -28,61 +28,44 @@ const connectDB = async () => {
 
 connectDB();
 
-// Mock user data (you can replace this with a database later)
-const users = [];
+// Add User model
+const User = require('./models/User');
 
-app.get('/health_check', (req, res) => {
-  res.status(200).json({ message: 'Server is healthy' });
-});
-
-// Login route
-app.post('/login', (req, res) => {
+// Simplify the login route
+app.post('/login', async (req, res) => {
   const { username, password } = req.body;
 
-  // Check if user exists and password matches
-  const user = users.find(u => u.username === username && u.password === password);
-
-  if (user) {
-    res.status(200).json({ message: 'Login Successful', user: username });
-  } else {
-    res.status(401).json({ message: 'Invalid username or password' });
+  try {
+    const user = await User.findOne({ username, password });
+    if (user) {
+      res.status(200).json({ message: 'Login Successful', user: { id: user._id, username: user.username } });
+    } else {
+      res.status(401).json({ message: 'Invalid username or password' });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
-// Registration route
-app.post('/register', (req, res) => {
-  const { firstName, lastName, username, phoneNumber, password, repeatPassword, birthDate } = req.body;
+// Simplify the registration route
+app.post('/register', async (req, res) => {
+  const { username, password } = req.body;
 
-  // Validate if all fields are provided
-  if (!firstName || !lastName || !username || !phoneNumber || !password || !repeatPassword || !birthDate) {
-    return res.status(400).json({ message: 'Please fill in all the required fields' });
+  try {
+    let user = await User.findOne({ username });
+    if (user) {
+      return res.status(400).json({ message: 'User already exists' });
+    }
+
+    user = new User({ username, password });
+    await user.save();
+
+    res.status(201).json({ message: 'Registration successful', user: { id: user._id, username: user.username } });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
   }
-
-  // Check if passwords match
-  if (password !== repeatPassword) {
-    return res.status(400).json({ message: 'Passwords do not match' });
-  }
-
-  // Check if username already exists
-  const userExists = users.find(user => user.username === username);
-  if (userExists) {
-    return res.status(400).json({ message: 'Username already taken' });
-  }
-
-  // Register the new user
-  const newUser = {
-    firstName,
-    lastName,
-    username,
-    phoneNumber,
-    password,
-    birthDate,
-  };
-
-  // Add the user to the mock database
-  users.push(newUser);
-
-  res.status(201).json({ message: 'Registration successful', user: newUser });
 });
 
 // Mock database for workouts

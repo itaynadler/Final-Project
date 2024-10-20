@@ -1,46 +1,37 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Alert, TouchableOpacity } from 'react-native';
+import { View, Text, TextInput, StyleSheet, Alert, TouchableOpacity } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const API_URL = 'http://localhost:3000'; // Replace with your actual backend URL
 
 const LoginPage = ({ navigation }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
   const handleLogin = async () => {
-    if (username.toLowerCase() === 'admin') {
-        Alert.alert('Admin Login', 'Redirecting to Admin Dashboard');
-        navigation.navigate('Admin');
-        return;
-    }
-    if (username.toLowerCase() === 'itay') {
-        Alert.alert(' Login', 'Redirecting to Dashboard');
+    try {
+      const response = await fetch(`${API_URL}/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, password }),
+      });
+
+      const data = await response.json();
+
+      if (response.status === 200) {
+        Alert.alert('Login Successful', `Welcome, ${data.user.username}!`);
         navigation.navigate('Home');
-        return;
+      } else {
+        Alert.alert('Login Failed', data.message);
+      }
+    } catch (error) {
+      console.error(error);
+      Alert.alert('Error', 'Something went wrong');
     }
-    // try {
-    //   const response = await fetch('http://localhost:3000/login', {
-    //     method: 'POST',
-    //     headers: {
-    //       'Content-Type': 'application/json',
-    //     },
-    //     body: JSON.stringify({
-    //       username,
-    //       password,
-    //     }),
-    //   });
-  
-    //   const data = await response.json();
-      
-    //   if (response.status === 200) {
-    //     Alert.alert('Login Successful', `Welcome, ${data.user}!`);
-    //     navigation.navigate('Home');
-    //   } else {
-    //     Alert.alert('Login Failed', data.message);
-    //   }
-    // } catch (error) {
-    //   Alert.alert('Error', 'Something went wrong');
-    // }
   };
-  
+
   const handleRegister = () => {
     navigation.navigate('Register');
   };
@@ -54,8 +45,6 @@ const LoginPage = ({ navigation }) => {
         value={username}
         onChangeText={setUsername}
         autoCapitalize="none"
-        keyboardType="email-address"
-        maxLength={50}  // Prevents the text input from growing indefinitely
       />
       <TextInput
         style={styles.input}
@@ -63,14 +52,13 @@ const LoginPage = ({ navigation }) => {
         value={password}
         onChangeText={setPassword}
         secureTextEntry={true}
-        maxLength={50}  // Prevents the text input from growing indefinitely
       />
       <TouchableOpacity style={styles.button} onPress={handleLogin}>
         <Text style={styles.buttonText}>Login</Text>
       </TouchableOpacity>
-      < Text style={styles.regText}>New with us?</Text>
+      <Text style={styles.regText}>New with us?</Text>
       <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
-        <Text style={styles.registerButtonText}> Register now</Text>
+        <Text style={styles.registerButtonText}>Register now</Text>
       </TouchableOpacity>
     </View>
   );
