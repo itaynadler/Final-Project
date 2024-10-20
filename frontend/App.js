@@ -7,7 +7,7 @@ import LoginPage from './components/login';
 import RegisterPage from './components/register';
 import HomePage from './components/home';
 import SchedulePage from './components/schedule';
-import AdminHomePage from './components/adminhomepage';
+import AdminPage from './components/AdminPage';
 import AdminSchedulePage from './components/AdminSchedulePage';
 
 
@@ -36,7 +36,7 @@ export default function App() {
           <Stack.Screen name="Register" component={RegisterPage} />
           <Stack.Screen name="Home" component={HomePage} options={{headerShown: false}}/>
           <Stack.Screen name="Schedule" component={SchedulePage} options={{headerShown: false}}/>
-          <Stack.Screen name="Admin" component={AdminHomePage} options={{ headerShown: false }} />
+          <Stack.Screen name="Admin" component={AdminPage} options={{ title: 'Admin Dashboard' }} />
           <Stack.Screen name="AdminSchedule" component={AdminSchedulePage} options={{ title: 'Schedule' }} />
         </Stack.Navigator>
       </NavigationContainer>

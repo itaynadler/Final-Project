@@ -26,19 +26,39 @@ const connectDB = async () => {
   }
 };
 
-connectDB();
+// Add admin user if it doesn't exist
+const createAdminUser = async () => {
+  try {
+    const adminUser = await User.findOne({ username: 'admin' });
+    if (!adminUser) {
+      const newAdminUser = new User({
+        username: 'admin',
+        password: 'admin', // In a real application, use bcrypt to hash the password
+        isAdmin: true,
+      });
+      await newAdminUser.save();
+      console.log('Admin user created successfully');
+    }
+  } catch (error) {
+    console.error('Error creating admin user:', error);
+  }
+};
+
+connectDB().then(() => {
+  createAdminUser();
+});
 
 // Add User model
 const User = require('./models/User');
 
-// Simplify the login route
+// Update the login route to include isAdmin in the response
 app.post('/login', async (req, res) => {
   const { username, password } = req.body;
 
   try {
     const user = await User.findOne({ username, password });
     if (user) {
-      res.status(200).json({ message: 'Login Successful', user: { id: user._id, username: user.username } });
+      res.status(200).json({ message: 'Login Successful', user: { id: user._id, username: user.username, isAdmin: user.isAdmin } });
     } else {
       res.status(401).json({ message: 'Invalid username or password' });
     }
@@ -152,6 +172,29 @@ app.delete('/bookings/:userId/:workoutId', (req, res) => {
   workout.attendees.splice(attendeeIndex, 1);
 
   res.status(200).json({ message: `Successfully cancelled booking for ${workout.title}`, workout });
+});
+
+// Add a new route to create workouts (for admin use)
+app.post('/workouts', async (req, res) => {
+  const { title, instructor, date, time, capacity } = req.body;
+
+  try {
+    const newWorkout = {
+      id: Date.now().toString(),
+      title,
+      instructor,
+      date,
+      time,
+      capacity: parseInt(capacity),
+      attendees: [],
+    };
+
+    workouts.push(newWorkout);
+    res.status(201).json({ message: 'Workout created successfully', workout: newWorkout });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
 });
 
 // Start the server

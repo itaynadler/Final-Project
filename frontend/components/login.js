@@ -22,7 +22,11 @@ const LoginPage = ({ navigation }) => {
 
       if (response.status === 200) {
         Alert.alert('Login Successful', `Welcome, ${data.user.username}!`);
-        navigation.navigate('Home');
+        if (data.user.isAdmin) {
+          navigation.navigate('Admin');
+        } else {
+          navigation.navigate('Home');
+        }
       } else {
         Alert.alert('Login Failed', data.message);
       }
