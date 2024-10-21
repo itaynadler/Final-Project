@@ -35,7 +35,15 @@ const ProfilePage = () => {
 
   const handleSave = async () => {
     try {
-      const response = await fetch(`http://localhost:3000/user/${userData._id}`, {
+      const storedUserData = await AsyncStorage.getItem('userData');
+      if (!storedUserData) {
+        console.error('No user data found in AsyncStorage');
+        return;
+      }
+
+      const { id } = JSON.parse(storedUserData);
+      
+      const response = await fetch(`http://localhost:3000/user/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

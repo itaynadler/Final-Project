@@ -215,14 +215,23 @@ app.post('/workouts', async (req, res) => {
   }
 });
 
-// Add this new route to fetch user data
+// Update the existing route to fetch user data
 app.get('/user/:id', async (req, res) => {
   try {
     const user = await User.findById(req.params.id).select('-password');
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-    res.json(user);
+    res.json({
+      id: user._id,
+      username: user.username,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      phoneNumber: user.phoneNumber,
+      birthDate: user.birthDate,
+      membershipType: user.membershipType,
+      isAdmin: user.isAdmin
+    });
   } catch (error) {
     console.error('Error fetching user data:', error);
     res.status(500).json({ message: 'Server error' });
