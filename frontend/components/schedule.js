@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Modal, ActivityIndicator } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import moment from 'moment';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect } from '@react-navigation/native';
 
 const SchedulePage = () => {
   const [workouts, setWorkouts] = useState([]);
@@ -17,6 +18,17 @@ const SchedulePage = () => {
   useEffect(() => {
     fetchWorkouts();
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchWorkouts();
+      global.refreshSchedules = fetchWorkouts;
+
+      return () => {
+        global.refreshSchedules = null;
+      };
+    }, [])
+  );
 
   const fetchWorkouts = async () => {
     try {

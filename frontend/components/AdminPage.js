@@ -1,126 +1,38 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView } from 'react-native';
+import React from 'react';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import Icon from 'react-native-vector-icons/Ionicons';
+import AdminDashboard from './AdminDashboard';
+import AdminSchedulePage from './AdminSchedulePage';
+import CreateWorkoutPage from './adminnewworkout';
+
+const Tab = createBottomTabNavigator();
 
 const AdminPage = () => {
-  const [title, setTitle] = useState('');
-  const [instructor, setInstructor] = useState('');
-  const [date, setDate] = useState('');
-  const [time, setTime] = useState('');
-  const [capacity, setCapacity] = useState('');
-
-  const handleCreateWorkout = async () => {
-    if (!title || !instructor || !date || !time || !capacity) {
-      Alert.alert('Error', 'Please fill all fields');
-      return;
-    }
-
-    try {
-      const response = await fetch('http://localhost:3000/workouts', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          title,
-          instructor,
-          date,
-          time,
-          capacity,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        Alert.alert('Success', data.message);
-        // Clear the form
-        setTitle('');
-        setInstructor('');
-        setDate('');
-        setTime('');
-        setCapacity('');
-      } else {
-        Alert.alert('Error', data.message);
-      }
-    } catch (error) {
-      console.error('Error creating workout:', error);
-      Alert.alert('Error', 'Failed to create workout');
-    }
-  };
-
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.header}>Create New Workout</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Title"
-        value={title}
-        onChangeText={setTitle}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Instructor"
-        value={instructor}
-        onChangeText={setInstructor}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Date (YYYY-MM-DD)"
-        value={date}
-        onChangeText={setDate}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Time (HH:MM)"
-        value={time}
-        onChangeText={setTime}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Capacity"
-        value={capacity}
-        onChangeText={setCapacity}
-        keyboardType="numeric"
-      />
-      <TouchableOpacity style={styles.button} onPress={handleCreateWorkout}>
-        <Text style={styles.buttonText}>Create Workout</Text>
-      </TouchableOpacity>
-    </ScrollView>
+    <Tab.Navigator
+      initialRouteName="Dashboard"
+      screenOptions={({ route }) => ({
+        tabBarIcon: ({ color, size }) => {
+          let iconName;
+          if (route.name === 'Dashboard') {
+            iconName = 'stats-chart-outline';
+          } else if (route.name === 'Schedule') {
+            iconName = 'calendar-outline';
+          } else if (route.name === 'Create Workout') {
+            iconName = 'add-circle-outline';
+          }
+          return <Icon name={iconName} size={size} color={color} />;
+        },
+        tabBarActiveTintColor: '#007BFF',
+        tabBarInactiveTintColor: 'gray',
+        headerShown: false,
+      })}
+    >
+      <Tab.Screen name="Dashboard" component={AdminDashboard} />
+      <Tab.Screen name="Schedule" component={AdminSchedulePage} />
+      <Tab.Screen name="Create Workout" component={CreateWorkoutPage} />
+    </Tab.Navigator>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flexGrow: 1,
-    padding: 20,
-    backgroundColor: '#f8f9fa',
-  },
-  header: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    color: '#2d4150',
-  },
-  input: {
-    backgroundColor: '#ffffff',
-    borderRadius: 8,
-    padding: 10,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: '#ced4da',
-  },
-  button: {
-    backgroundColor: '#007bff',
-    borderRadius: 8,
-    padding: 15,
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  buttonText: {
-    color: '#ffffff',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-});
 
 export default AdminPage;

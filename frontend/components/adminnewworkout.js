@@ -1,20 +1,23 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 
 const CreateWorkoutPage = () => {
   const [title, setTitle] = useState('');
   const [instructor, setInstructor] = useState('');
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
+  const [capacity, setCapacity] = useState('');
+  const navigation = useNavigation();
 
   const handleCreateWorkout = async () => {
-    if (!title || !instructor || !date || !time) {
+    if (!title || !instructor || !date || !time || !capacity) {
       Alert.alert('Error', 'Please fill all fields');
       return;
     }
 
     try {
-      const response = await fetch('http://localhost:3000/createWorkout', {
+      const response = await fetch('http://localhost:3000/workouts', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -24,8 +27,11 @@ const CreateWorkoutPage = () => {
           instructor,
           date,
           time,
+          capacity: parseInt(capacity),
         }),
       });
+
+      const data = await response.json();
 
       if (response.ok) {
         Alert.alert('Success', 'Workout created successfully');
@@ -34,10 +40,22 @@ const CreateWorkoutPage = () => {
         setInstructor('');
         setDate('');
         setTime('');
+        setCapacity('');
+
+        // Refresh the AdminSchedulePage
+        if (navigation.canGoBack()) {
+          navigation.goBack();
+        }
+        
+        // Trigger a global refresh for both admin and user schedules
+        if (global.refreshSchedules) {
+          global.refreshSchedules();
+        }
       } else {
-        Alert.alert('Error', 'Failed to create workout');
+        Alert.alert('Error', data.message || 'Failed to create workout');
       }
     } catch (error) {
+      console.error('Error creating workout:', error);
       Alert.alert('Error', 'Something went wrong while creating the workout');
     }
   };
@@ -68,6 +86,13 @@ const CreateWorkoutPage = () => {
         placeholder="Time (HH:MM)"
         value={time}
         onChangeText={setTime}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Capacity"
+        value={capacity}
+        onChangeText={setCapacity}
+        keyboardType="numeric"
       />
       <Button title="Create Workout" onPress={handleCreateWorkout} />
     </View>
