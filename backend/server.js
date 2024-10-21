@@ -106,47 +106,62 @@ app.post('/register', async (req, res) => {
   }
 });
 
-// Mock database for workouts (updated with more details)
-let workouts = [
-  { id: '1', title: 'Hybrid Training', instructor: 'John Doe', date: '2024-03-25', time: '08:00', capacity: 20, attendees: [] },
-  { id: '2', title: 'Yoga Vinyasa', instructor: 'Jane Smith', date: '2024-03-25', time: '10:00', capacity: 15, attendees: [] },
-  { id: '3', title: 'Mat Pilates', instructor: 'Mike Johnson', date: '2024-03-26', time: '09:00', capacity: 12, attendees: [] },
-  { id: '4', title: 'Hybrid Training', instructor: 'Sarah Brown', date: '2024-03-26', time: '18:00', capacity: 20, attendees: [] }
-];
+// Add this near the top of the file, with other imports
+const Workout = require('./models/Workout');
+
+// Replace the mock workouts array with this line
+let workouts = [];
 
 // Endpoint to get all workouts
-app.get('/workouts', (req, res) => {
-  res.json(workouts);
+app.get('/workouts', async (req, res) => {
+  try {
+    const workouts = await Workout.find().sort({ date: 1, time: 1 });
+    res.json(workouts);
+  } catch (error) {
+    console.error('Error fetching workouts:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
 });
 
 // Endpoint to book a workout
-app.post('/book', (req, res) => {
+app.post('/book', async (req, res) => {
   const { workoutId, userId } = req.body;
 
-  const workout = workouts.find(w => w.id === workoutId);
+  try {
+    const workout = await Workout.findById(workoutId);
 
-  if (!workout) {
-    return res.status(404).json({ message: 'Workout not found' });
+    if (!workout) {
+      return res.status(404).json({ message: 'Workout not found' });
+    }
+
+    if (workout.attendees.includes(userId)) {
+      return res.status(400).json({ message: 'You are already booked for this workout' });
+    }
+
+    if (workout.attendees.length >= workout.capacity) {
+      return res.status(400).json({ message: 'This workout is fully booked' });
+    }
+
+    workout.attendees.push(userId);
+    await workout.save();
+
+    res.status(200).json({ message: `Successfully booked ${workout.title}`, workout });
+  } catch (error) {
+    console.error('Error booking workout:', error);
+    res.status(500).json({ message: 'Server error' });
   }
-
-  if (workout.attendees.includes(userId)) {
-    return res.status(400).json({ message: 'You are already booked for this workout' });
-  }
-
-  if (workout.attendees.length >= workout.capacity) {
-    return res.status(400).json({ message: 'This workout is fully booked' });
-  }
-
-  workout.attendees.push(userId);
-
-  res.status(200).json({ message: `Successfully booked ${workout.title}`, workout });
 });
 
 // Endpoint to get user's bookings
-app.get('/bookings/:userId', (req, res) => {
+app.get('/bookings/:userId', async (req, res) => {
   const userId = req.params.userId;
-  const userBookings = workouts.filter(workout => workout.attendees.includes(userId));
-  res.json(userBookings);
+  try {
+    const userBookings = await Workout.find({ attendees: userId });
+    res.json(userBookings);
+  } catch (error) {
+    console.error('Error fetching user bookings:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
 });
 
 // Sign-up route for workouts
@@ -173,23 +188,29 @@ app.post('/signup', (req, res) => {
 });
 
 // Endpoint to delete a booking
-app.delete('/bookings/:userId/:workoutId', (req, res) => {
+app.delete('/bookings/:userId/:workoutId', async (req, res) => {
   const { userId, workoutId } = req.params;
 
-  const workout = workouts.find(w => w.id === workoutId);
+  try {
+    const workout = await Workout.findById(workoutId);
 
-  if (!workout) {
-    return res.status(404).json({ message: 'Workout not found' });
+    if (!workout) {
+      return res.status(404).json({ message: 'Workout not found' });
+    }
+
+    const attendeeIndex = workout.attendees.indexOf(userId);
+    if (attendeeIndex === -1) {
+      return res.status(400).json({ message: 'You are not booked for this workout' });
+    }
+
+    workout.attendees.splice(attendeeIndex, 1);
+    await workout.save();
+
+    res.status(200).json({ message: `Successfully cancelled booking for ${workout.title}`, workout });
+  } catch (error) {
+    console.error('Error cancelling booking:', error);
+    res.status(500).json({ message: 'Server error' });
   }
-
-  const attendeeIndex = workout.attendees.indexOf(userId);
-  if (attendeeIndex === -1) {
-    return res.status(400).json({ message: 'You are not booked for this workout' });
-  }
-
-  workout.attendees.splice(attendeeIndex, 1);
-
-  res.status(200).json({ message: `Successfully cancelled booking for ${workout.title}`, workout });
 });
 
 // Add a new route to create workouts (for admin use)
@@ -197,20 +218,19 @@ app.post('/workouts', async (req, res) => {
   const { title, instructor, date, time, capacity } = req.body;
 
   try {
-    const newWorkout = {
-      id: Date.now().toString(),
+    const newWorkout = new Workout({
       title,
       instructor,
       date,
       time,
       capacity: parseInt(capacity),
       attendees: [],
-    };
+    });
 
-    workouts.push(newWorkout);
+    await newWorkout.save();
     res.status(201).json({ message: 'Workout created successfully', workout: newWorkout });
   } catch (error) {
-    console.error(error);
+    console.error('Error creating workout:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
