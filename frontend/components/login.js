@@ -21,7 +21,15 @@ const LoginPage = ({ navigation }) => {
       const data = await response.json();
 
       if (response.status === 200) {
-        Alert.alert('Login Successful', `Welcome, ${data.user.username}!`);
+        // Store user data in AsyncStorage
+        await AsyncStorage.setItem('userData', JSON.stringify({
+          id: data.user.id,
+          username: data.user.username,
+          firstName: data.user.firstName,
+          isAdmin: data.user.isAdmin
+        }));
+
+        Alert.alert('Login Successful', `Welcome, ${data.user.firstName}!`);
         if (data.user.isAdmin) {
           navigation.navigate('Admin');
         } else {

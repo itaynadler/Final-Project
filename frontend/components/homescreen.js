@@ -1,7 +1,26 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const HomeScreen = () => {
+  const [firstName, setFirstName] = useState('');
+
+  useEffect(() => {
+    const getUserData = async () => {
+      try {
+        const userData = await AsyncStorage.getItem('userData');
+        if (userData) {
+          const { firstName } = JSON.parse(userData);
+          setFirstName(firstName);
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      }
+    };
+
+    getUserData();
+  }, []);
+
   return (
     <View style={styles.container}>
       {/* Avatar Symbol */}
@@ -10,7 +29,7 @@ const HomeScreen = () => {
           source={{ uri: 'https://via.placeholder.com/150' }} // Placeholder image, replace with user's avatar
           style={styles.avatar}
         />
-        <Text style={styles.userName}>Welcome, User!</Text>
+        <Text style={styles.userName}>Welcome, {firstName}!</Text>
       </View>
 
       {/* Running Squares with Messages */}

@@ -22,7 +22,8 @@ const connectDB = async () => {
     });
     console.log('MongoDB connected successfully');
   } catch (error) {
-    console.error('MongoDB connection error:', error);
+    console.error('MongoDB connection error:', error.message);
+    // Exit process with failure
     process.exit(1);
   }
 };
@@ -59,7 +60,15 @@ app.post('/login', async (req, res) => {
   try {
     const user = await User.findOne({ username, password }); // Compare plain text passwords
     if (user) {
-      res.status(200).json({ message: 'Login Successful', user: { id: user._id, username: user.username, isAdmin: user.isAdmin } });
+      res.status(200).json({ 
+        message: 'Login Successful', 
+        user: { 
+          id: user._id, 
+          username: user.username, 
+          firstName: user.firstName, // Add firstName to the response
+          isAdmin: user.isAdmin 
+        } 
+      });
     } else {
       res.status(401).json({ message: 'Invalid username or password' });
     }
@@ -202,6 +211,41 @@ app.post('/workouts', async (req, res) => {
     res.status(201).json({ message: 'Workout created successfully', workout: newWorkout });
   } catch (error) {
     console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Add this new route to fetch user data
+app.get('/user/:id', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select('-password');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.json(user);
+  } catch (error) {
+    console.error('Error fetching user data:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Add this new route to update user data
+app.put('/user/:id', async (req, res) => {
+  try {
+    const { phoneNumber, birthDate, membershipType } = req.body;
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { phoneNumber, birthDate, membershipType },
+      { new: true }
+    ).select('-password');
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.json(user);
+  } catch (error) {
+    console.error('Error updating user data:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
