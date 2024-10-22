@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, Button, Alert, TouchableOpacity, Dimensions, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TextInput, Button, Alert, TouchableOpacity, Dimensions, ScrollView, FlatList } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -9,11 +9,14 @@ const AdminDashboard = () => {
   const [membershipData, setMembershipData] = useState([]);
   const [message, setMessage] = useState('');
   const [totalMembers, setTotalMembers] = useState(0);
+  const [announcements, setAnnouncements] = useState([]);
+  const [editingAnnouncement, setEditingAnnouncement] = useState(null);
 
   const navigation = useNavigation();
 
   useEffect(() => {
     fetchClientData();
+    fetchAnnouncements();
   }, []);
 
   const fetchClientData = async () => {
@@ -31,6 +34,20 @@ const AdminDashboard = () => {
     }
   };
 
+  const fetchAnnouncements = async () => {
+    try {
+      const response = await fetch('http://localhost:3000/announcements');
+      const data = await response.json();
+      if (response.ok) {
+        setAnnouncements(data);
+      } else {
+        Alert.alert('Error', 'Failed to load announcements');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Something went wrong while fetching announcements');
+    }
+  };
+
   const sendMessage = async () => {
     if (!message.trim()) {
       Alert.alert('Error', 'Message cannot be empty');
@@ -38,7 +55,7 @@ const AdminDashboard = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:3000/sendMessage', {
+      const response = await fetch('http://localhost:3000/announcements', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -47,15 +64,78 @@ const AdminDashboard = () => {
       });
 
       if (response.ok) {
-        Alert.alert('Success', 'Message sent to clients');
+        Alert.alert('Success', 'Announcement created successfully');
         setMessage(''); // Clear the input after sending
+        fetchAnnouncements(); // Refresh the announcements list
       } else {
-        Alert.alert('Error', 'Failed to send the message');
+        Alert.alert('Error', 'Failed to create the announcement');
       }
     } catch (error) {
-      Alert.alert('Error', 'Something went wrong while sending the message');
+      Alert.alert('Error', 'Something went wrong while creating the announcement');
     }
   };
+
+  const updateAnnouncement = async () => {
+    if (!editingAnnouncement || !message.trim()) {
+      Alert.alert('Error', 'Message cannot be empty');
+      return;
+    }
+
+    try {
+      const response = await fetch(`http://localhost:3000/announcements/${editingAnnouncement._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message }),
+      });
+
+      if (response.ok) {
+        Alert.alert('Success', 'Announcement updated successfully');
+        setMessage('');
+        setEditingAnnouncement(null);
+        fetchAnnouncements();
+      } else {
+        Alert.alert('Error', 'Failed to update the announcement');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Something went wrong while updating the announcement');
+    }
+  };
+
+  const deleteAnnouncement = async (id) => {
+    try {
+      const response = await fetch(`http://localhost:3000/announcements/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        Alert.alert('Success', 'Announcement deleted successfully');
+        fetchAnnouncements();
+      } else {
+        Alert.alert('Error', 'Failed to delete the announcement');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Something went wrong while deleting the announcement');
+    }
+  };
+
+  const renderAnnouncementItem = ({ item }) => (
+    <View style={styles.announcementItem}>
+      <Text style={styles.announcementText}>{item.message}</Text>
+      <View style={styles.announcementActions}>
+        <TouchableOpacity onPress={() => {
+          setMessage(item.message);
+          setEditingAnnouncement(item);
+        }}>
+          <Ionicons name="create-outline" size={24} color="#007BFF" />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => deleteAnnouncement(item._id)}>
+          <Ionicons name="trash-outline" size={24} color="#DC3545" />
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
 
   const handleLogout = async () => {
     try {
@@ -121,14 +201,48 @@ const AdminDashboard = () => {
         </View>
       </View>
 
-      <View style={styles.messageContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Write a message to clients..."
-          value={message}
-          onChangeText={setMessage}
-        />
-        <Button title="Send Message" onPress={sendMessage} />
+      <View style={styles.announcementsSection}>
+        <Text style={styles.sectionTitle}>Announcements</Text>
+        <View style={styles.messageContainer}>
+          <TextInput
+            style={styles.input}
+            placeholder={editingAnnouncement ? "Edit announcement..." : "Write a new announcement..."}
+            value={message}
+            onChangeText={setMessage}
+            multiline
+            numberOfLines={4}
+            textAlignVertical="top"
+          />
+          <TouchableOpacity 
+            style={styles.actionButton}
+            onPress={editingAnnouncement ? updateAnnouncement : sendMessage}
+          >
+            <Text style={styles.actionButtonText}>
+              {editingAnnouncement ? "Update" : "Create"}
+            </Text>
+          </TouchableOpacity>
+          {editingAnnouncement && (
+            <TouchableOpacity 
+              style={[styles.actionButton, styles.cancelButton]}
+              onPress={() => {
+                setEditingAnnouncement(null);
+                setMessage('');
+              }}
+            >
+              <Text style={styles.actionButtonText}>Cancel</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        <View style={styles.announcementsContainer}>
+          <Text style={styles.announcementsTitle}>Current Announcements</Text>
+          <FlatList
+            data={announcements}
+            renderItem={renderAnnouncementItem}
+            keyExtractor={(item) => item._id}
+            ListEmptyComponent={<Text style={styles.emptyText}>No announcements yet.</Text>}
+          />
+        </View>
       </View>
     </ScrollView>
   );
@@ -203,8 +317,28 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: '100%',
   },
-  messageContainer: {
+  announcementsSection: {
     padding: 20,
+  },
+  sectionTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 15,
+    color: '#333',
+  },
+  messageContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 15,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 3,
+    marginBottom: 20,
   },
   input: {
     borderColor: '#ccc',
@@ -214,6 +348,65 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     fontSize: 16,
     backgroundColor: '#fff',
+    minHeight: 100,
+  },
+  actionButton: {
+    backgroundColor: '#007BFF',
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  actionButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  cancelButton: {
+    backgroundColor: '#6c757d',
+  },
+  announcementsContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 15,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 3,
+  },
+  announcementsTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    color: '#333',
+  },
+  announcementItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+    padding: 15,
+    borderRadius: 8,
+    marginBottom: 10,
+  },
+  announcementText: {
+    flex: 1,
+    fontSize: 16,
+    color: '#333',
+  },
+  announcementActions: {
+    flexDirection: 'row',
+    marginLeft: 10,
+  },
+  emptyText: {
+    textAlign: 'center',
+    color: '#666',
+    fontStyle: 'italic',
+    marginTop: 10,
   },
 });
 

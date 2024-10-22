@@ -108,6 +108,8 @@ app.post('/register', async (req, res) => {
 
 // Add this near the top of the file, with other imports
 const Workout = require('./models/Workout');
+const Announcement = require('./models/Announcement');
+const moment = require('moment');
 
 // Replace the mock workouts array with this line
 let workouts = [];
@@ -309,6 +311,86 @@ app.get('/membership-stats', async (req, res) => {
   } catch (error) {
     console.error('Error fetching membership stats:', error);
     res.status(500).json({ message: 'Error fetching membership statistics' });
+  }
+});
+
+// Get all announcements
+app.get('/announcements', async (req, res) => {
+  try {
+    const announcements = await Announcement.find().sort({ createdAt: -1 });
+    res.json(announcements);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Create a new announcement
+app.post('/announcements', async (req, res) => {
+  const { message } = req.body;
+  try {
+    const newAnnouncement = new Announcement({ message });
+    await newAnnouncement.save();
+    res.status(201).json(newAnnouncement);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Update an announcement
+app.put('/announcements/:id', async (req, res) => {
+  const { id } = req.params;
+  const { message } = req.body;
+  try {
+    const updatedAnnouncement = await Announcement.findByIdAndUpdate(
+      id,
+      { message },
+      { new: true }
+    );
+    if (!updatedAnnouncement) {
+      return res.status(404).json({ message: 'Announcement not found' });
+    }
+    res.json(updatedAnnouncement);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Delete an announcement
+app.delete('/announcements/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const deletedAnnouncement = await Announcement.findByIdAndDelete(id);
+    if (!deletedAnnouncement) {
+      return res.status(404).json({ message: 'Announcement not found' });
+    }
+    res.json({ message: 'Announcement deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Add this new endpoint
+app.get('/workouts/user/:userId', async (req, res) => {
+  const { userId } = req.params;
+  const { date } = req.query;
+
+  try {
+    // Parse the date and create start/end of day
+    const startOfDay = moment(date).startOf('day').toDate();
+    const endOfDay = moment(date).endOf('day').toDate();
+
+    const userWorkouts = await Workout.find({
+      attendees: userId,
+      date: {
+        $gte: startOfDay,
+        $lte: endOfDay
+      }
+    }).sort({ date: 1, time: 1 });
+
+    res.json(userWorkouts);
+  } catch (error) {
+    console.error('Error fetching user workouts:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
