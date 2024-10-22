@@ -3,14 +3,15 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, Modal, ActivityIndi
 import { Calendar } from 'react-native-calendars';
 import moment from 'moment';
 import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useRoute } from '@react-navigation/native';
 
 const AdminSchedulePage = () => {
   const [workouts, setWorkouts] = useState([]);
-  const [selectedDate, setSelectedDate] = useState(moment().format('YYYY-MM-DD'));
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedWorkout, setSelectedWorkout] = useState(null);
   const [loading, setLoading] = useState(false);
+  const route = useRoute();
 
   useEffect(() => {
     fetchWorkouts();
@@ -26,6 +27,12 @@ const AdminSchedulePage = () => {
       };
     }, [])
   );
+
+  useEffect(() => {
+    if (route.params?.selectedDate) {
+      setSelectedDate(route.params.selectedDate);
+    }
+  }, [route.params?.selectedDate]);
 
   const fetchWorkouts = async () => {
     try {

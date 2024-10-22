@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, ScrollView, ActivityIndicator, TouchableOpacity, TextInput, Platform } from 'react-native';
+import { View, Text, StyleSheet, Image, ScrollView, ActivityIndicator, TouchableOpacity, TextInput, Platform, Modal } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Card, Button } from '@rneui/themed';
 import { Picker } from '@react-native-picker/picker';
+import { Calendar } from 'react-native-calendars';
+import { Ionicons } from '@expo/vector-icons';
 
 const ProfilePage = () => {
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(false);
 
   useEffect(() => {
     fetchUserData();
@@ -67,16 +70,23 @@ const ProfilePage = () => {
     }
   };
 
-  const formatDate = (date) => {
-    const d = new Date(date);
-    let month = '' + (d.getMonth() + 1);
-    let day = '' + d.getDate();
-    const year = d.getFullYear();
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+    
+    // Check if the date is in ISO format (2024-10-23T00:00:00.000Z)
+    if (dateString.includes('T')) {
+      const date = new Date(dateString);
+      return `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
+    }
+    
+    // If it's already in YYYY-MM-DD format
+    const [year, month, day] = dateString.split('-');
+    return `${day}/${month}/${year}`;
+  };
 
-    if (month.length < 2) month = '0' + month;
-    if (day.length < 2) day = '0' + day;
-
-    return [year, month, day].join('-');
+  const handleDateSelect = (day) => {
+    setUserData({ ...userData, birthDate: day.dateString });
+    setShowCalendar(false);
   };
 
   if (loading) {
@@ -128,12 +138,10 @@ const ProfilePage = () => {
         <View style={styles.infoRow}>
           <Text style={styles.infoLabel}>Birth Date:</Text>
           {editing ? (
-            <TextInput
-              style={styles.input}
-              value={formatDate(userData.birthDate)}
-              onChangeText={(text) => setUserData({ ...userData, birthDate: new Date(text) })}
-              placeholder="YYYY-MM-DD"
-            />
+            <TouchableOpacity style={styles.dateInput} onPress={() => setShowCalendar(true)}>
+              <Text style={styles.dateText}>{formatDate(userData.birthDate)}</Text>
+              <Ionicons name="calendar" size={24} color="#007BFF" />
+            </TouchableOpacity>
           ) : (
             <Text style={styles.infoValue}>{formatDate(userData.birthDate)}</Text>
           )}
@@ -165,6 +173,35 @@ const ProfilePage = () => {
       ) : (
         <Button title="Edit Profile" onPress={handleEdit} buttonStyle={styles.editButton} />
       )}
+
+      <Modal visible={showCalendar} transparent={true} animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.calendarContainer}>
+            <Calendar
+              onDayPress={handleDateSelect}
+              markedDates={{[userData.birthDate]: {selected: true, selectedColor: '#007BFF'}}}
+              theme={{
+                backgroundColor: '#ffffff',
+                calendarBackground: '#ffffff',
+                textSectionTitleColor: '#b6c1cd',
+                selectedDayBackgroundColor: '#007BFF',
+                selectedDayTextColor: '#ffffff',
+                todayTextColor: '#007BFF',
+                dayTextColor: '#2d4150',
+                textDisabledColor: '#d9e1e8',
+                dotColor: '#007BFF',
+                selectedDotColor: '#ffffff',
+                arrowColor: '#007BFF',
+                monthTextColor: '#2d4150',
+                indicatorColor: '#007BFF',
+              }}
+            />
+            <TouchableOpacity style={styles.closeButton} onPress={() => setShowCalendar(false)}>
+              <Text style={styles.closeButtonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 };
@@ -240,6 +277,44 @@ const styles = StyleSheet.create({
     backgroundColor: '#28a745',
     marginHorizontal: 20,
     marginTop: 20,
+  },
+  dateInput: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderColor: '#ddd',
+    borderWidth: 1,
+    borderRadius: 5,
+    padding: 5,
+    flex: 2,
+  },
+  dateText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  calendarContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 20,
+    width: '90%',
+    maxWidth: 400,
+  },
+  closeButton: {
+    backgroundColor: '#007BFF',
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  closeButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
   },
 });
 

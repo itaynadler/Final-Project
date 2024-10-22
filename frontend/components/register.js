@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, Alert, TouchableOpacity, ScrollView, Platform } from 'react-native';
+import { View, Text, TextInput, StyleSheet, Alert, TouchableOpacity, ScrollView, Platform, Modal } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
+import { Calendar } from 'react-native-calendars';
+import { Ionicons } from '@expo/vector-icons';
 
 const RegisterPage = ({navigation}) => {
   const [firstName, setFirstName] = useState('');
@@ -11,6 +13,7 @@ const RegisterPage = ({navigation}) => {
   const [repeatPassword, setRepeatPassword] = useState('');
   const [birthDate, setBirthDate] = useState('');
   const [membershipType, setMembershipType] = useState('full');
+  const [showCalendar, setShowCalendar] = useState(false);
 
   const handleSubmit = async () => {
     if (password !== repeatPassword) {
@@ -46,6 +49,17 @@ const RegisterPage = ({navigation}) => {
     } catch (error) {
       Alert.alert('Error', 'Something went wrong');
     }
+  };
+
+  const handleDateSelect = (day) => {
+    setBirthDate(day.dateString);
+    setShowCalendar(false);
+  };
+
+  const formatDate = (date) => {
+    if (!date) return '';
+    const [year, month, day] = date.split('-');
+    return `${day}/${month}/${year}`;
   };
 
   return (
@@ -91,12 +105,14 @@ const RegisterPage = ({navigation}) => {
         onChangeText={setPhoneNumber}
         keyboardType="phone-pad"
       />
-      <TextInput
-        style={styles.input}
-        placeholder="Birth Date (DD/MM/YYYY)"
-        value={birthDate}
-        onChangeText={setBirthDate}
-      />
+      <TouchableOpacity style={styles.input} onPress={() => setShowCalendar(true)}>
+        <View style={styles.dateInputContent}>
+          <Text style={birthDate ? styles.dateText : styles.placeholderText}>
+            {birthDate ? formatDate(birthDate) : 'Select Birth Date'}
+          </Text>
+          <Ionicons name="calendar" size={24} color="#007BFF" />
+        </View>
+      </TouchableOpacity>
       <View style={styles.inputContainer}>
         <Picker
           selectedValue={membershipType}
@@ -110,6 +126,35 @@ const RegisterPage = ({navigation}) => {
       <TouchableOpacity style={styles.button} onPress={handleSubmit}>
         <Text style={styles.buttonText}>Submit</Text>
       </TouchableOpacity>
+
+      <Modal visible={showCalendar} transparent={true} animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.calendarContainer}>
+            <Calendar
+              onDayPress={handleDateSelect}
+              markedDates={{[birthDate]: {selected: true, selectedColor: '#007BFF'}}}
+              theme={{
+                backgroundColor: '#ffffff',
+                calendarBackground: '#ffffff',
+                textSectionTitleColor: '#b6c1cd',
+                selectedDayBackgroundColor: '#007BFF',
+                selectedDayTextColor: '#ffffff',
+                todayTextColor: '#007BFF',
+                dayTextColor: '#2d4150',
+                textDisabledColor: '#d9e1e8',
+                dotColor: '#007BFF',
+                selectedDotColor: '#ffffff',
+                arrowColor: '#007BFF',
+                monthTextColor: '#2d4150',
+                indicatorColor: '#007BFF',
+              }}
+            />
+            <TouchableOpacity style={styles.closeButton} onPress={() => setShowCalendar(false)}>
+              <Text style={styles.closeButtonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 };
@@ -142,6 +187,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: '#fff',
     fontSize: 16,
+    justifyContent: 'center', // Center content vertically
   },
   picker: {
     width: '100%',
@@ -171,6 +217,43 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#fff',
     fontSize: 18,
+    fontWeight: 'bold',
+  },
+  dateInputContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  dateText: {
+    fontSize: 16,
+    color: '#000',
+  },
+  placeholderText: {
+    fontSize: 16,
+    color: '#999',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  calendarContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 20,
+    width: '90%',
+    maxWidth: 400,
+  },
+  closeButton: {
+    backgroundColor: '#007BFF',
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  closeButtonText: {
+    color: '#fff',
     fontWeight: 'bold',
   },
 });
