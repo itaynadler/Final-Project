@@ -95,11 +95,12 @@ const SchedulePage = () => {
     >
       <View style={styles.workoutHeader}>
         <Text style={styles.workoutTitle}>{item.title}</Text>
-        <Text style={styles.workoutTime}>{item.time}</Text>
+        <Text style={styles.workoutInfo}>Time: {item.time}</Text>
       </View>
       <Text style={styles.workoutInfo}>Instructor: {item.instructor}</Text>
-      <Text style={styles.workoutInfo}>Date: {formatDate(item.date)}</Text>
-      <Text style={styles.workoutInfo}>Spots: {item.attendees.length} / {item.capacity}</Text>
+      <Text style={styles.workoutInfo}>
+        Spots Available: {item.capacity - item.attendees.length} / {item.capacity}
+      </Text>
     </TouchableOpacity>
   );
 
@@ -164,7 +165,9 @@ const SchedulePage = () => {
                 <Text style={styles.modalInfo}>Instructor: {selectedWorkout.instructor}</Text>
                 <Text style={styles.modalInfo}>Date: {formatDate(selectedWorkout.date)}</Text>
                 <Text style={styles.modalInfo}>Time: {selectedWorkout.time}</Text>
-                <Text style={styles.modalInfo}>Spots: {selectedWorkout.attendees.length} / {selectedWorkout.capacity}</Text>
+                <Text style={styles.modalInfo}>
+                  Spots Available: {selectedWorkout.capacity - selectedWorkout.attendees.length} / {selectedWorkout.capacity}
+                </Text>
                 
                 {errorMessage ? (
                   <View style={[styles.messageContainer, styles.errorContainer]}>
@@ -246,10 +249,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: '#2d4150',
-  },
-  workoutTime: {
-    fontSize: 16,
-    color: '#007BFF',
   },
   workoutInfo: {
     fontSize: 14,

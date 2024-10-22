@@ -114,18 +114,22 @@ const moment = require('moment');
 // Replace the mock workouts array with this line
 let workouts = [];
 
-// Endpoint to get all workouts
+// Update the endpoint to get all workouts
 app.get('/workouts', async (req, res) => {
   try {
     const workouts = await Workout.find().sort({ date: 1, time: 1 });
-    res.json(workouts);
+    const workoutsWithAvailableSpots = workouts.map(workout => ({
+      ...workout._doc,
+      availableSpots: workout.capacity - workout.attendees.length
+    }));
+    res.json(workoutsWithAvailableSpots);
   } catch (error) {
     console.error('Error fetching workouts:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
 
-// Endpoint to book a workout
+// Update the endpoint to book a workout
 app.post('/book', async (req, res) => {
   const { workoutId, userId } = req.body;
 
@@ -147,19 +151,29 @@ app.post('/book', async (req, res) => {
     workout.attendees.push(userId);
     await workout.save();
 
-    res.status(200).json({ message: `Successfully booked ${workout.title}`, workout });
+    res.status(200).json({ 
+      message: `Successfully booked ${workout.title}`, 
+      workout: {
+        ...workout._doc,
+        availableSpots: workout.capacity - workout.attendees.length
+      }
+    });
   } catch (error) {
     console.error('Error booking workout:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
 
-// Endpoint to get user's bookings
+// Update the endpoint to get user's bookings
 app.get('/bookings/:userId', async (req, res) => {
   const userId = req.params.userId;
   try {
     const userBookings = await Workout.find({ attendees: userId });
-    res.json(userBookings);
+    const bookingsWithAvailableSpots = userBookings.map(booking => ({
+      ...booking._doc,
+      availableSpots: booking.capacity - booking.attendees.length
+    }));
+    res.json(bookingsWithAvailableSpots);
   } catch (error) {
     console.error('Error fetching user bookings:', error);
     res.status(500).json({ message: 'Server error' });
@@ -189,7 +203,7 @@ app.post('/signup', (req, res) => {
   res.status(200).json({ message: `Successfully signed up for ${workout.title}` });
 });
 
-// Endpoint to delete a booking
+// Update the endpoint to delete a booking
 app.delete('/bookings/:userId/:workoutId', async (req, res) => {
   const { userId, workoutId } = req.params;
 
@@ -208,7 +222,13 @@ app.delete('/bookings/:userId/:workoutId', async (req, res) => {
     workout.attendees.splice(attendeeIndex, 1);
     await workout.save();
 
-    res.status(200).json({ message: `Successfully cancelled booking for ${workout.title}`, workout });
+    res.status(200).json({ 
+      message: `Successfully cancelled booking for ${workout.title}`, 
+      workout: {
+        ...workout._doc,
+        availableSpots: workout.capacity - workout.attendees.length
+      }
+    });
   } catch (error) {
     console.error('Error cancelling booking:', error);
     res.status(500).json({ message: 'Server error' });
