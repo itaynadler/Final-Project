@@ -279,6 +279,39 @@ app.put('/user/:id', async (req, res) => {
   }
 });
 
+// Add this new route
+app.get('/membership-stats', async (req, res) => {
+  try {
+    const totalMembers = await User.countDocuments({ isAdmin: false });
+    const membershipStats = await User.aggregate([
+      {
+        $match: { isAdmin: false }  // Exclude admin users
+      },
+      {
+        $group: {
+          _id: '$membershipType',
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $project: {
+          type: '$_id',
+          count: 1,
+          _id: 0
+        }
+      }
+    ]);
+
+    res.json({
+      totalMembers,
+      membershipStats
+    });
+  } catch (error) {
+    console.error('Error fetching membership stats:', error);
+    res.status(500).json({ message: 'Error fetching membership statistics' });
+  }
+});
+
 // Start the server
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
