@@ -3,6 +3,7 @@ import { View, Text, TextInput, Button, StyleSheet, Alert, TouchableOpacity, Mod
 import { useNavigation } from '@react-navigation/native';
 import { Calendar } from 'react-native-calendars';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const CreateWorkoutPage = () => {
   const [title, setTitle] = useState('');
@@ -120,9 +121,29 @@ const CreateWorkoutPage = () => {
     navigation.navigate('AdminSchedule', { selectedDate: date });
   };
 
+  const handleLogout = async () => {
+    try {
+      await AsyncStorage.removeItem('userData');
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Login' }],
+      });
+    } catch (error) {
+      console.error('Error logging out:', error);
+      Alert.alert('Error', 'Failed to log out. Please try again.');
+    }
+  };
+
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Create New Workout</Text>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Create New Workout</Text>
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+          <Ionicons name="log-out-outline" size={24} color="#fff" />
+          <Text style={styles.logoutButtonText}>Logout</Text>
+        </TouchableOpacity>
+      </View>
+
       <TextInput
         style={styles.input}
         placeholder="Workout Title"
@@ -237,10 +258,27 @@ const styles = StyleSheet.create({
     backgroundColor: '#f5f5f5',
   },
   header: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#007BFF',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
     marginBottom: 20,
-    color: '#333',
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  logoutButtonText: {
+    color: '#fff',
+    marginLeft: 8,
+    fontSize: 16,
   },
   input: {
     borderColor: '#ccc',

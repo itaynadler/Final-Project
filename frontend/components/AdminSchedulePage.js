@@ -3,7 +3,8 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, Modal, ActivityIndi
 import { Calendar } from 'react-native-calendars';
 import moment from 'moment';
 import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect, useRoute } from '@react-navigation/native';
+import { useFocusEffect, useRoute, useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const AdminSchedulePage = () => {
   const [workouts, setWorkouts] = useState([]);
@@ -12,6 +13,7 @@ const AdminSchedulePage = () => {
   const [selectedWorkout, setSelectedWorkout] = useState(null);
   const [loading, setLoading] = useState(false);
   const route = useRoute();
+  const navigation = useNavigation();
 
   useEffect(() => {
     fetchWorkouts();
@@ -95,8 +97,33 @@ const AdminSchedulePage = () => {
     return acc;
   }, {});
 
+  const handleLogout = async () => {
+    try {
+      await AsyncStorage.removeItem('userData');
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Login' }],
+      });
+    } catch (error) {
+      console.error('Error logging out:', error);
+      Alert.alert('Error', 'Failed to log out. Please try again.');
+    }
+  };
+
+  const formatDate = (dateString) => {
+    const [year, month, day] = dateString.split('-');
+    return `${day}/${month}/${year}`;
+  };
+
   return (
     <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Admin Schedule</Text>
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+          <Ionicons name="log-out-outline" size={24} color="#fff" />
+          <Text style={styles.logoutButtonText}>Logout</Text>
+        </TouchableOpacity>
+      </View>
       <Calendar
         current={selectedDate}
         onDayPress={(day) => setSelectedDate(day.dateString)}
@@ -124,7 +151,7 @@ const AdminSchedulePage = () => {
           indicatorColor: '#007BFF',
         }}
       />
-      <Text style={styles.header}>Workouts for {selectedDate}</Text>
+      <Text style={styles.header}>Workouts for {formatDate(selectedDate)}</Text>
       <FlatList
         data={filteredWorkouts}
         renderItem={renderWorkoutItem}
@@ -182,11 +209,26 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8f9fa',
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#007BFF',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+  },
+  headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    marginVertical: 16,
-    marginHorizontal: 16,
-    color: '#2d4150',
+    color: '#fff',
+  },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  logoutButtonText: {
+    color: '#fff',
+    marginLeft: 8,
+    fontSize: 16,
   },
   listContainer: {
     paddingBottom: 20,

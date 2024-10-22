@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, ScrollView, ActivityIndicator, TouchableOpacity, TextInput, Platform, Modal } from 'react-native';
+import { View, Text, StyleSheet, Image, ScrollView, ActivityIndicator, TouchableOpacity, TextInput, Platform, Modal, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Card, Button } from '@rneui/themed';
 import { Picker } from '@react-native-picker/picker';
 import { Calendar } from 'react-native-calendars';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 
 const ProfilePage = () => {
   const [userData, setUserData] = useState(null);
@@ -89,6 +90,25 @@ const ProfilePage = () => {
     setShowCalendar(false);
   };
 
+  const navigation = useNavigation();
+
+  const handleLogout = async () => {
+    try {
+      await AsyncStorage.removeItem('userData');
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Login' }],
+      });
+    } catch (error) {
+      console.error('Error logging out:', error);
+      Alert.alert('Error', 'Failed to log out. Please try again.');
+    }
+  };
+
+  const getInitial = (name) => {
+    return name ? name.charAt(0).toUpperCase() : '?';
+  };
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -108,10 +128,9 @@ const ProfilePage = () => {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <Image
-          source={{ uri: 'https://via.placeholder.com/150' }}
-          style={styles.avatar}
-        />
+        <View style={styles.avatarContainer}>
+          <Text style={styles.avatarText}>{getInitial(userData.firstName)}</Text>
+        </View>
         <Text style={styles.name}>{`${userData.firstName} ${userData.lastName}`}</Text>
       </View>
 
@@ -174,6 +193,16 @@ const ProfilePage = () => {
         <Button title="Edit Profile" onPress={handleEdit} buttonStyle={styles.editButton} />
       )}
 
+      <Button 
+        title="Logout" 
+        onPress={handleLogout} 
+        buttonStyle={styles.logoutButton}
+        titleStyle={styles.logoutButtonText}
+        icon={
+          <Ionicons name="log-out-outline" size={24} color="#fff" style={styles.logoutIcon} />
+        }
+      />
+
       <Modal visible={showCalendar} transparent={true} animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.calendarContainer}>
@@ -221,11 +250,19 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: '#007BFF',
   },
-  avatar: {
+  avatarContainer: {
     width: 100,
     height: 100,
     borderRadius: 50,
+    backgroundColor: '#4CAF50', // Nice green color
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 10,
+  },
+  avatarText: {
+    fontSize: 40,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
   },
   name: {
     fontSize: 24,
@@ -315,6 +352,21 @@ const styles = StyleSheet.create({
   closeButtonText: {
     color: '#fff',
     fontWeight: 'bold',
+  },
+  logoutButton: {
+    backgroundColor: '#dc3545',
+    marginHorizontal: 20,
+    marginTop: 20,
+    marginBottom: 30,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  logoutButtonText: {
+    marginLeft: 10,
+  },
+  logoutIcon: {
+    marginRight: 10,
   },
 });
 

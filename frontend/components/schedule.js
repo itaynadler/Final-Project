@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Modal, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Modal, ActivityIndicator, Alert } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import moment from 'moment';
 import { Ionicons } from '@expo/vector-icons';
@@ -14,6 +14,12 @@ const SchedulePage = () => {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+    const [year, month, day] = dateString.split('-');
+    return `${day}/${month}/${year}`;
+  };
 
   useEffect(() => {
     fetchWorkouts();
@@ -92,7 +98,8 @@ const SchedulePage = () => {
         <Text style={styles.workoutTime}>{item.time}</Text>
       </View>
       <Text style={styles.workoutInfo}>Instructor: {item.instructor}</Text>
-      <Text style={styles.workoutInfo}>Spots Available: {item.capacity - item.attendees.length} / {item.capacity}</Text>
+      <Text style={styles.workoutInfo}>Date: {formatDate(item.date)}</Text>
+      <Text style={styles.workoutInfo}>Spots: {item.attendees.length} / {item.capacity}</Text>
     </TouchableOpacity>
   );
 
@@ -133,7 +140,7 @@ const SchedulePage = () => {
           indicatorColor: '#007BFF',
         }}
       />
-      <Text style={styles.header}>Workouts for {selectedDate}</Text>
+      <Text style={styles.header}>Workouts for {formatDate(selectedDate)}</Text>
       <FlatList
         data={filteredWorkouts}
         renderItem={renderWorkoutItem}
@@ -155,9 +162,9 @@ const SchedulePage = () => {
               <>
                 <Text style={styles.modalTitle}>{selectedWorkout.title}</Text>
                 <Text style={styles.modalInfo}>Instructor: {selectedWorkout.instructor}</Text>
-                <Text style={styles.modalInfo}>Date: {moment(selectedWorkout.date).format('YYYY-MM-DD')}</Text>
+                <Text style={styles.modalInfo}>Date: {formatDate(selectedWorkout.date)}</Text>
                 <Text style={styles.modalInfo}>Time: {selectedWorkout.time}</Text>
-                <Text style={styles.modalInfo}>Spots Available: {selectedWorkout.capacity - selectedWorkout.attendees.length} / {selectedWorkout.capacity}</Text>
+                <Text style={styles.modalInfo}>Spots: {selectedWorkout.attendees.length} / {selectedWorkout.capacity}</Text>
                 
                 {errorMessage ? (
                   <View style={[styles.messageContainer, styles.errorContainer]}>

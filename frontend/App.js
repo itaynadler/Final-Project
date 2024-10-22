@@ -36,8 +36,8 @@ export default function App() {
           <Stack.Screen name="Register" component={RegisterPage} />
           <Stack.Screen name="Home" component={HomePage} options={{headerShown: false}}/>
           <Stack.Screen name="Schedule" component={SchedulePage} options={{headerShown: false}}/>
-          <Stack.Screen name="Admin" component={AdminPage} options={{ title: 'Admin Dashboard' }} />
-          <Stack.Screen name="AdminSchedule" component={AdminSchedulePage} options={{ title: 'Schedule' }} />
+          <Stack.Screen name="Admin" component={AdminPage} options={{ headerShown: false }} />
+          <Stack.Screen name="AdminSchedule" component={AdminSchedulePage} options={{ headerShown: false }} />
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>
