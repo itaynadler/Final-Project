@@ -19,7 +19,11 @@ const RegisterPage = () => {
 
   const navigation = useNavigation();
 
-  const handleSubmit = async () => {
+  const getMembershipAmount = (type) => {
+    return type === 'full' ? 200 : 150;
+  };
+
+  const handleProceedToPayment = async () => {
     if (password !== repeatPassword) {
       Alert.alert('Error', 'Passwords do not match');
       return;
@@ -45,8 +49,18 @@ const RegisterPage = () => {
       const data = await response.json();
 
       if (response.status === 201) {
-        Alert.alert('Registration Successful', 'You have successfully registered!');
-        navigation.navigate('Payment'); // Navigate to PaymentPage after successful registration
+        // Registration successful, navigate to PaymentPage
+        navigation.navigate('Payment', {
+          membershipType,
+          amount: getMembershipAmount(membershipType),
+          onPaymentSuccess: () => {
+            Alert.alert(
+              'Registration Successful',
+              'You have successfully registered! Please log in.',
+              [{ text: 'OK', onPress: () => navigation.navigate('Login') }]
+            );
+          }
+        });
       } else {
         Alert.alert('Registration Failed', data.message);
       }
@@ -135,14 +149,9 @@ const RegisterPage = () => {
           <Picker.Item label="Partial Membership" value="partial" />
         </Picker>
       </View>
-      <TouchableOpacity style={styles.button} onPress={handleSubmit}>
-        <Text style={styles.buttonText}>Register</Text>
-      </TouchableOpacity>
-      
-      {/* New Payment Button */}
       <TouchableOpacity 
         style={[styles.button, styles.paymentButton]} 
-        onPress={() => navigation.navigate('Payment')}
+        onPress={handleProceedToPayment}
       >
         <Text style={styles.buttonText}>Proceed to Payment</Text>
       </TouchableOpacity>
@@ -278,7 +287,8 @@ const styles = StyleSheet.create({
   },
   paymentButton: {
     backgroundColor: '#28a745',
-    marginTop: 16,
+    marginTop: 20,
+    marginBottom: 30,
   },
 });
 

@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const PaymentPage = ({ navigation }) => {
+const PaymentPage = ({ route, navigation }) => {
+  const { onPaymentSuccess, membershipType, amount } = route.params;
   const [loading, setLoading] = useState(false);
   const [paypalClientId, setPaypalClientId] = useState('');
 
@@ -30,8 +31,8 @@ const PaymentPage = ({ navigation }) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          amount: '20.00',
-          currency: 'USD',
+          amount: amount.toString(),
+          currency: 'ILS',
         }),
       });
 
@@ -72,7 +73,11 @@ const PaymentPage = ({ navigation }) => {
 
       if (data.status === 'COMPLETED') {
         Alert.alert('Payment Successful', 'Your payment has been processed successfully.');
-        navigation.navigate('Home');
+        if (onPaymentSuccess) {
+          onPaymentSuccess();
+        } else {
+          navigation.navigate('Home');
+        }
       } else if (data.status === 'CANCELLED') {
         Alert.alert('Payment Cancelled', 'Your payment was cancelled.');
       } else {
@@ -87,7 +92,8 @@ const PaymentPage = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Make a Payment</Text>
-      <Text style={styles.amount}>Amount: $20.00 USD</Text>
+      <Text style={styles.membershipType}>{membershipType === 'full' ? 'Full Membership' : 'Partial Membership'}</Text>
+      <Text style={styles.amount}>Amount: {amount} ILS</Text>
       <TouchableOpacity style={styles.payButton} onPress={handlePayment} disabled={loading}>
         {loading ? (
           <ActivityIndicator size="small" color="#ffffff" />
@@ -112,6 +118,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 20,
     color: '#333',
+  },
+  membershipType: {
+    fontSize: 18,
+    marginBottom: 10,
+    color: '#007BFF',
   },
   amount: {
     fontSize: 18,

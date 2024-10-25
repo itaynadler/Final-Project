@@ -49,20 +49,31 @@ const BookingsPage = () => {
     }
   };
 
-  const renderBookingItem = ({ item }) => (
-    <View style={styles.bookingItem}>
-      <Text style={styles.bookingTitle}>{item.title}</Text>
-      <Text style={styles.bookingInfo}>Instructor: {item.instructor}</Text>
-      <Text style={styles.bookingInfo}>Date: {moment(item.date).format('YYYY-MM-DD')}</Text>
-      <Text style={styles.bookingInfo}>Time: {item.time}</Text>
-      <TouchableOpacity
-        style={styles.cancelButton}
-        onPress={() => cancelBooking(item._id)}
-      >
-        <Text style={styles.cancelButtonText}>Cancel Booking</Text>
-      </TouchableOpacity>
-    </View>
-  );
+  const renderBookingItem = ({ item }) => {
+    const workoutDate = moment(`${item.date} ${item.time}`, 'YYYY-MM-DD HH:mm');
+    const isPastWorkout = moment().isAfter(workoutDate);
+
+    return (
+      <View style={styles.bookingItem}>
+        <Text style={styles.bookingTitle}>{item.title}</Text>
+        <Text style={styles.bookingInfo}>Instructor: {item.instructor}</Text>
+        <Text style={styles.bookingInfo}>Date: {moment(item.date).format('YYYY-MM-DD')}</Text>
+        <Text style={styles.bookingInfo}>Time: {item.time}</Text>
+        {isPastWorkout ? (
+          <View style={styles.completedContainer}>
+            <Text style={styles.completedText}>Workout Completed</Text>
+          </View>
+        ) : (
+          <TouchableOpacity
+            style={styles.cancelButton}
+            onPress={() => cancelBooking(item._id)}
+          >
+            <Text style={styles.cancelButtonText}>Cancel Booking</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -121,6 +132,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cancelButtonText: {
+    color: '#ffffff',
+    fontWeight: 'bold',
+  },
+  completedContainer: {
+    backgroundColor: '#28a745',
+    padding: 10,
+    borderRadius: 5,
+    marginTop: 10,
+    alignItems: 'center',
+  },
+  completedText: {
     color: '#ffffff',
     fontWeight: 'bold',
   },
