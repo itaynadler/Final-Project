@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Alert, TouchableOpacity } from 'react-native';
+import { View, Text, TextInput, StyleSheet, Alert, TouchableOpacity, ScrollView, Platform, Modal } from 'react-native';
+import { Picker } from '@react-native-picker/picker';
+import { Calendar } from 'react-native-calendars';
+import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 
-const RegisterPage = ({navigation}) => {
+const RegisterPage = () => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [username, setUsername] = useState('');
@@ -9,16 +13,21 @@ const RegisterPage = ({navigation}) => {
   const [password, setPassword] = useState('');
   const [repeatPassword, setRepeatPassword] = useState('');
   const [birthDate, setBirthDate] = useState('');
-  const [passwordsMatch, setPasswordsMatch] = useState(true);
+  const [membershipType, setMembershipType] = useState('');
+  const [showCalendar, setShowCalendar] = useState(false);
 
-  const handleSubmit = async () => {
+  const navigation = useNavigation();
+
+  const getMembershipAmount = (type) => {
+    return type === 'full' ? 200 : 150;
+  };
+
+  const handleProceedToPayment = async () => {
     if (password !== repeatPassword) {
-      setPasswordsMatch(false);
+      Alert.alert('Error', 'Passwords do not match');
       return;
     }
-  
-    setPasswordsMatch(true);
-  
+
     try {
       const response = await fetch('http://localhost:3000/register', {
         method: 'POST',
@@ -31,16 +40,25 @@ const RegisterPage = ({navigation}) => {
           username,
           phoneNumber,
           password,
-          repeatPassword,
-          birthDate
+          birthDate,
+          membershipType
         }),
       });
-  
+
       const data = await response.json();
-  
+
       if (response.status === 201) {
-        Alert.alert('Registration Successful', 'You have successfully registered!');
-        navigation.navigate('Login');
+        navigation.navigate('Payment', {
+          membershipType,
+          amount: getMembershipAmount(membershipType),
+          onPaymentSuccess: () => {
+            Alert.alert(
+              'Registration Successful',
+              'You have successfully registered! Please log in.',
+              [{ text: 'OK', onPress: () => navigation.navigate('Login') }]
+            );
+          }
+        });
       } else {
         Alert.alert('Registration Failed', data.message);
       }
@@ -48,10 +66,27 @@ const RegisterPage = ({navigation}) => {
       Alert.alert('Error', 'Something went wrong');
     }
   };
-  
+
+  const handleDateChange = (event, selectedDate) => {
+    setShowCalendar(false);
+    if (selectedDate) {
+      setBirthDate(selectedDate.toISOString().split('T')[0]);
+    }
+  };
+
+  const formatDate = (date) => {
+    if (!date) return '';
+    const [year, month, day] = date.split('-');
+    return `${day}/${month}/${year}`;
+  };
+
+  const handleDateSelect = (day) => {
+    setBirthDate(day.dateString);
+    setShowCalendar(false);
+  };
 
   return (
-    <View style={styles.container}>
+    <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Register</Text>
       <TextInput
         style={styles.input}
@@ -71,52 +106,93 @@ const RegisterPage = ({navigation}) => {
         value={username}
         onChangeText={setUsername}
         autoCapitalize="none"
-        keyboardType="email-address"
-      />
-       <TextInput
-        style={styles.input}
-        placeholder="Birth Date (DD-MM-YYYY)"
-        value={birthDate}
-        onChangeText={setBirthDate}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Phone Number"
-        value={phoneNumber}
-        onChangeText={setPhoneNumber}
       />
       <TextInput
         style={styles.input}
         placeholder="Password"
         value={password}
         onChangeText={setPassword}
-        // secureTextEntry={true}
+        secureTextEntry={true}
       />
-      {!passwordsMatch && (
-        <Text style={styles.errorText}>Passwords do not match</Text>
-      )}
       <TextInput
         style={styles.input}
         placeholder="Repeat Password"
         value={repeatPassword}
         onChangeText={setRepeatPassword}
-        // secureTextEntry={true}
+        secureTextEntry={true}
       />
-    
-      <TouchableOpacity style={styles.button} onPress={handleSubmit}>
-        <Text style={styles.buttonText}>Submit</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Phone Number"
+        value={phoneNumber}
+        onChangeText={setPhoneNumber}
+        keyboardType="phone-pad"
+      />
+      <TouchableOpacity style={styles.input} onPress={() => setShowCalendar(true)}>
+        <View style={styles.dateInputContent}>
+          <Text style={birthDate ? styles.dateText : styles.placeholderText}>
+            {birthDate ? formatDate(birthDate) : 'Select Birth Date'}
+          </Text>
+          <Ionicons name="calendar" size={24} color="#007BFF" />
+        </View>
       </TouchableOpacity>
-    </View>
+      <View style={styles.inputContainer}>
+        <Picker
+          selectedValue={membershipType}
+          style={styles.picker}
+          onValueChange={(itemValue) => setMembershipType(itemValue)}
+        >
+          <Picker.Item label="Select Membership Type" value="" />
+          <Picker.Item label="Full Membership" value="full" />
+          <Picker.Item label="Partial Membership" value="partial" />
+        </Picker>
+      </View>
+      <TouchableOpacity 
+        style={[styles.button, styles.paymentButton]} 
+        onPress={handleProceedToPayment}
+      >
+        <Text style={styles.buttonText}>Proceed to Payment</Text>
+      </TouchableOpacity>
+
+      <Modal visible={showCalendar} transparent={true} animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.calendarContainer}>
+            <Calendar
+              onDayPress={handleDateSelect}
+              markedDates={{[birthDate]: {selected: true, selectedColor: '#007BFF'}}}
+              theme={{
+                backgroundColor: '#ffffff',
+                calendarBackground: '#ffffff',
+                textSectionTitleColor: '#b6c1cd',
+                selectedDayBackgroundColor: '#007BFF',
+                selectedDayTextColor: '#ffffff',
+                todayTextColor: '#007BFF',
+                dayTextColor: '#2d4150',
+                textDisabledColor: '#d9e1e8',
+                dotColor: '#007BFF',
+                selectedDotColor: '#ffffff',
+                arrowColor: '#007BFF',
+                monthTextColor: '#2d4150',
+                indicatorColor: '#007BFF',
+              }}
+            />
+            <TouchableOpacity style={styles.closeButton} onPress={() => setShowCalendar(false)}>
+              <Text style={styles.closeButtonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 16,
-    backgroundColor: '#f5f5f5', // Lighter background color
+    padding: 20,
+    backgroundColor: '#f5f5f5',
   },
   title: {
     fontSize: 28,
@@ -124,9 +200,13 @@ const styles = StyleSheet.create({
     marginBottom: 30,
     color: '#333',
   },
+  inputContainer: {
+    width: '100%',
+    marginBottom: 15,
+  },
   input: {
-    width: 300, // Fixed width
-    height: 50, // Fixed height
+    width: '100%',
+    height: 50,
     borderColor: '#cccccc',
     borderWidth: 1,
     marginBottom: 15,
@@ -134,24 +214,79 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: '#fff',
     fontSize: 16,
+    justifyContent: 'center', // Center content vertically
+  },
+  picker: {
+    width: '100%',
+    height: 50,
+    borderColor: '#cccccc',
+    borderWidth: 1,
+    borderRadius: 8,
+    backgroundColor: '#fff',
+    ...Platform.select({
+      web: {
+        outlineStyle: 'none',
+        appearance: 'none',
+        paddingHorizontal: 15,
+        paddingRight: 30,
+      },
+    }),
   },
   button: {
-    backgroundColor: '#007BFF', // Button color
+    backgroundColor: '#007BFF',
     paddingVertical: 15,
     paddingHorizontal: 20,
     borderRadius: 8,
-    width: 200, // Width of the button
+    width: '100%',
     alignItems: 'center',
     marginVertical: 10,
   },
   buttonText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
   },
-  errorText: {
-    color: 'red',
-    marginBottom: 10,
+  dateInputContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  dateText: {
+    fontSize: 16,
+    color: '#000',
+  },
+  placeholderText: {
+    fontSize: 16,
+    color: '#999',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  calendarContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 20,
+    width: '90%',
+    maxWidth: 400,
+  },
+  closeButton: {
+    backgroundColor: '#007BFF',
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  closeButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  paymentButton: {
+    backgroundColor: '#28a745',
+    marginTop: 20,
+    marginBottom: 30,
   },
 });
 

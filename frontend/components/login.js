@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, Alert, TouchableOpacity } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
 
-const API_URL = 'http://localhost:3000'; // Replace with your actual backend URL
+const API_URL = 'http://localhost:3000';
 
-const LoginPage = ({ navigation }) => {
+const LoginPage = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [loginError, setLoginError] = useState(''); // New state for login error message
+
+  const navigation = useNavigation();
 
   const handleLogin = async () => {
     try {
@@ -21,18 +25,19 @@ const LoginPage = ({ navigation }) => {
       const data = await response.json();
 
       if (response.status === 200) {
-        Alert.alert('Login Successful', `Welcome, ${data.user.username}!`);
+        await AsyncStorage.setItem('userData', JSON.stringify(data.user));
+        setLoginError(''); // Clear any previous error message
         if (data.user.isAdmin) {
           navigation.navigate('Admin');
         } else {
           navigation.navigate('Home');
         }
       } else {
-        Alert.alert('Login Failed', data.message);
+        setLoginError('Invalid username or password'); // Set error message
       }
     } catch (error) {
-      console.error(error);
-      Alert.alert('Error', 'Something went wrong');
+      console.error('Login error:', error);
+      Alert.alert('Error', 'An error occurred during login');
     }
   };
 
@@ -60,6 +65,7 @@ const LoginPage = ({ navigation }) => {
       <TouchableOpacity style={styles.button} onPress={handleLogin}>
         <Text style={styles.buttonText}>Login</Text>
       </TouchableOpacity>
+      {loginError ? <Text style={styles.errorText}>{loginError}</Text> : null} {/* New error message */}
       <Text style={styles.regText}>New with us?</Text>
       <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
         <Text style={styles.registerButtonText}>Register now</Text>
@@ -74,7 +80,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: '#f5f5f5', // Lighter background color
+    backgroundColor: '#f5f5f5',
   },
   title: {
     fontSize: 28,
@@ -83,8 +89,8 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   input: {
-    width: 300, // Fixed width
-    height: 50, // Fixed height
+    width: 300, 
+    height: 50, 
     borderColor: '#cccccc',
     borderWidth: 1,
     marginBottom: 15,
@@ -94,11 +100,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   button: {
-    backgroundColor: '#007BFF', // Button color
+    backgroundColor: '#007BFF', 
     paddingVertical: 15,
     paddingHorizontal: 20,
     borderRadius: 8,
-    width: 200, // Width of the login button
+    width: 200, 
     alignItems: 'center',
     marginVertical: 10,
   },
@@ -108,20 +114,25 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   registerButton: {
-    marginTop: 15, // Margin to move it down
-    backgroundColor: 'transparent', // Transparent background
+    marginTop: 15, 
+    backgroundColor: 'transparent', 
   },
   registerButtonText: {
-    color: '#007BFF', // Text color for register button
+    color: '#007BFF', 
     fontSize: 16,
-    textDecorationLine: 'underline', // Underline text to make it look like a link
+    textDecorationLine: 'underline', 
   },
   regText: {
     color: '#007BFF',
     fontSize: 18,
     marginTop: 55, 
        
-  }
+  },
+  errorText: {
+    color: 'red',
+    textAlign: 'center',
+    marginTop: 10,
+  },
 });
 
 export default LoginPage;

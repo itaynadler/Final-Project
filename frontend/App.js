@@ -9,6 +9,7 @@ import HomePage from './components/home';
 import SchedulePage from './components/schedule';
 import AdminPage from './components/AdminPage';
 import AdminSchedulePage from './components/AdminSchedulePage';
+import PaymentPage from './components/PaymentPage';
 
 
 
@@ -36,8 +37,9 @@ export default function App() {
           <Stack.Screen name="Register" component={RegisterPage} />
           <Stack.Screen name="Home" component={HomePage} options={{headerShown: false}}/>
           <Stack.Screen name="Schedule" component={SchedulePage} options={{headerShown: false}}/>
-          <Stack.Screen name="Admin" component={AdminPage} options={{ title: 'Admin Dashboard' }} />
-          <Stack.Screen name="AdminSchedule" component={AdminSchedulePage} options={{ title: 'Schedule' }} />
+          <Stack.Screen name="Admin" component={AdminPage} options={{ headerShown: false }} />
+          <Stack.Screen name="AdminSchedule" component={AdminSchedulePage} options={{ headerShown: false }} />
+          <Stack.Screen name="Payment" component={PaymentPage} />
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>

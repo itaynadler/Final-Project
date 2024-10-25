@@ -1,9 +1,9 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/Ionicons';
-import AdminDashboard from './AdminDashboard'; // Admin dashboard component
-import CreateWorkoutPage from './adminnewworkout'; // Workout creation component
-import AdminSchedulePage from './AdminSchedulePage'; // Admin schedule view component
+import AdminDashboard from './AdminDashboard'; 
+import CreateWorkoutPage from './adminnewworkout'; 
+import AdminSchedulePage from './AdminSchedulePage'; 
 
 const Tab = createBottomTabNavigator();
 

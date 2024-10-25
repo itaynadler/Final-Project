@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Modal, ActivityIndicator } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import moment from 'moment';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 
 const SchedulePage = () => {
   const [workouts, setWorkouts] = useState([]);
@@ -11,10 +13,24 @@ const SchedulePage = () => {
   const [selectedWorkout, setSelectedWorkout] = useState(null);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+  const navigation = useNavigation();
+
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+    const [year, month, day] = dateString.split('-');
+    return `${day}/${month}/${year}`;
+  };
 
   useEffect(() => {
     fetchWorkouts();
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchWorkouts();
+    }, [])
+  );
 
   const fetchWorkouts = async () => {
     try {
@@ -30,17 +46,28 @@ const SchedulePage = () => {
   const bookWorkout = async (workoutId) => {
     setLoading(true);
     try {
+      const userData = await AsyncStorage.getItem('userData');
+      const { id: userId } = JSON.parse(userData);
+
       const response = await fetch('http://localhost:3000/book', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ workoutId, userId: 'user123' }),
+        body: JSON.stringify({ workoutId, userId }),
       });
       const data = await response.json();
       if (response.ok) {
         setErrorMessage('');
-        fetchWorkouts();
+        setSuccessMessage(data.message);
+        fetchWorkouts(); 
+        if (global.refreshBookings) {
+          global.refreshBookings();
+        }
+        setTimeout(() => {
+          setSuccessMessage('');
+          setModalVisible(false);
+        }, 2000);
       } else {
         setErrorMessage(data.message);
       }
@@ -52,6 +79,10 @@ const SchedulePage = () => {
     }
   };
 
+  const filteredWorkouts = workouts.filter(workout => 
+    moment(workout.date).format('YYYY-MM-DD') === selectedDate
+  );
+
   const renderWorkoutItem = ({ item }) => (
     <TouchableOpacity
       style={styles.workoutItem}
@@ -62,16 +93,19 @@ const SchedulePage = () => {
     >
       <View style={styles.workoutHeader}>
         <Text style={styles.workoutTitle}>{item.title}</Text>
-        <Text style={styles.workoutTime}>{item.time}</Text>
+        <Text style={styles.workoutInfo}>Time: {item.time}</Text>
       </View>
       <Text style={styles.workoutInfo}>Instructor: {item.instructor}</Text>
-      <Text style={styles.workoutInfo}>Available: {item.capacity - item.attendees.length} / {item.capacity}</Text>
+      <Text style={styles.workoutInfo}>
+        Spots Available: {item.capacity - item.attendees.length} / {item.capacity}
+      </Text>
     </TouchableOpacity>
   );
 
   const markedDates = workouts.reduce((acc, workout) => {
-    if (!acc[workout.date]) {
-      acc[workout.date] = { marked: true, dotColor: '#007BFF' };
+    const date = moment(workout.date).format('YYYY-MM-DD');
+    if (!acc[date]) {
+      acc[date] = { marked: true, dotColor: '#007BFF' };
     }
     return acc;
   }, {});
@@ -81,7 +115,14 @@ const SchedulePage = () => {
       <Calendar
         current={selectedDate}
         onDayPress={(day) => setSelectedDate(day.dateString)}
-        markedDates={markedDates}
+        markedDates={{
+          ...markedDates,
+          [selectedDate]: {
+            ...markedDates[selectedDate],
+            selected: true,
+            selectedColor: '#007BFF',
+          },
+        }}
         theme={{
           backgroundColor: '#ffffff',
           calendarBackground: '#ffffff',
@@ -98,12 +139,15 @@ const SchedulePage = () => {
           indicatorColor: '#007BFF',
         }}
       />
-      <Text style={styles.header}>Available Workouts for {selectedDate}</Text>
+      <Text style={styles.header}>Workouts for {formatDate(selectedDate)}</Text>
       <FlatList
-        data={workouts.filter(workout => workout.date === selectedDate)}
+        data={filteredWorkouts}
         renderItem={renderWorkoutItem}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item._id}
         contentContainerStyle={styles.listContainer}
+        ListEmptyComponent={() => (
+          <Text style={styles.emptyListText}>No workouts scheduled for this date.</Text>
+        )}
       />
       <Modal
         animationType="slide"
@@ -117,16 +161,29 @@ const SchedulePage = () => {
               <>
                 <Text style={styles.modalTitle}>{selectedWorkout.title}</Text>
                 <Text style={styles.modalInfo}>Instructor: {selectedWorkout.instructor}</Text>
-                <Text style={styles.modalInfo}>Date: {selectedWorkout.date}</Text>
+                <Text style={styles.modalInfo}>Date: {formatDate(selectedWorkout.date)}</Text>
                 <Text style={styles.modalInfo}>Time: {selectedWorkout.time}</Text>
-                <Text style={styles.modalInfo}>Available: {selectedWorkout.capacity - selectedWorkout.attendees.length} / {selectedWorkout.capacity}</Text>
+                <Text style={styles.modalInfo}>
+                  Spots Available: {selectedWorkout.capacity - selectedWorkout.attendees.length} / {selectedWorkout.capacity}
+                </Text>
+                
                 {errorMessage ? (
-                  <Text style={styles.errorMessage}>{errorMessage}</Text>
+                  <View style={[styles.messageContainer, styles.errorContainer]}>
+                    <Ionicons name="alert-circle" size={24} color="#dc3545" />
+                    <Text style={styles.errorMessage}>{errorMessage}</Text>
+                  </View>
                 ) : null}
+                {successMessage ? (
+                  <View style={[styles.messageContainer, styles.successContainer]}>
+                    <Ionicons name="checkmark-circle" size={24} color="#28a745" />
+                    <Text style={styles.successMessage}>{successMessage}</Text>
+                  </View>
+                ) : null}
+                
                 <TouchableOpacity
                   style={styles.bookButton}
-                  onPress={() => bookWorkout(selectedWorkout.id)}
-                  disabled={loading}
+                  onPress={() => bookWorkout(selectedWorkout._id)}
+                  disabled={loading || successMessage !== ''}
                 >
                   {loading ? (
                     <ActivityIndicator color="#ffffff" />
@@ -139,6 +196,7 @@ const SchedulePage = () => {
                   onPress={() => {
                     setModalVisible(false);
                     setErrorMessage('');
+                    setSuccessMessage('');
                   }}
                 >
                   <Text style={styles.closeButtonText}>Close</Text>
@@ -189,10 +247,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: '#2d4150',
-  },
-  workoutTime: {
-    fontSize: 16,
-    color: '#007BFF',
   },
   workoutInfo: {
     fontSize: 14,
@@ -260,9 +314,37 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   errorMessage: {
-    color: '#dc3545',
+    color: '#721c24',
+    marginLeft: 10,
+    fontSize: 16,
+  },
+  successMessage: {
+    color: '#155724',
+    marginLeft: 10,
+    fontSize: 16,
+  },
+  emptyListText: {
     textAlign: 'center',
+    marginTop: 20,
+    fontSize: 16,
+    color: '#7d8a9a',
+  },
+  messageContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: 4,
+    padding: 10,
     marginBottom: 10,
+    width: '100%',
+  },
+  errorContainer: {
+    backgroundColor: '#f8d7da',
+    borderColor: '#f5c6cb',
+  },
+  successContainer: {
+    backgroundColor: '#d4edda',
+    borderColor: '#c3e6cb',
   },
 });
 
