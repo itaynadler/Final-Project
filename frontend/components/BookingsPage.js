@@ -1,16 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import moment from 'moment';
+import { useFocusEffect } from '@react-navigation/native';
 
 const BookingsPage = () => {
   const [bookings, setBookings] = useState([]);
 
-  useEffect(() => {
-    fetchBookings();
-  }, []);
-
-  const fetchBookings = async () => {
+  const fetchBookings = useCallback(async () => {
     try {
       const userData = await AsyncStorage.getItem('userData');
       const { id: userId } = JSON.parse(userData);
@@ -21,7 +18,17 @@ const BookingsPage = () => {
       console.error('Error fetching bookings:', error);
       Alert.alert('Error', 'Failed to fetch bookings. Please try again.');
     }
-  };
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchBookings();
+      global.refreshBookings = fetchBookings;
+      return () => {
+        global.refreshBookings = null;
+      };
+    }, [fetchBookings])
+  );
 
   const cancelBooking = async (workoutId) => {
     try {

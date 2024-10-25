@@ -63,6 +63,12 @@ const ProfilePage = () => {
         setEditing(false);
         // Refresh user data
         fetchUserData();
+        // Notify VideosPage to update access
+        if (global.refreshVideosAccess) {
+          global.refreshVideosAccess();
+        }
+        // Navigate back to force a re-render of the tab navigator
+        navigation.navigate('Home');
       } else {
         console.error('Failed to update user data');
       }

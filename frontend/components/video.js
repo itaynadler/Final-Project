@@ -1,21 +1,34 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, Dimensions, ScrollView, Platform, TouchableOpacity } from 'react-native';
 import { WebView } from 'react-native-webview';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 
 const SLIDER_WIDTH = Dimensions.get('window').width;
 const ITEM_WIDTH = Math.round(SLIDER_WIDTH * 0.9);
 
 const VideosPage = () => {
-  const [membershipType, setMembershipType] = useState(null);
+  const [membershipType, setMembershipType] = useState('');
+  const [videos, setVideos] = useState([
+    { id: '1', title: 'Full Body HIIT Workout', videoId: 'ml6cT4AZdqI' },
+    { id: '2', title: 'Yoga for Beginners', videoId: 'v7AYKMP6rOE' },
+    { id: '3', title: '30-Minute Cardio Workout', videoId: 'CBWQGb4LyAM' },
+    { id: '4', title: 'Core Strength Training', videoId: 'DHD1-2P94DI' },
+    { id: '5', title: 'Pilates for Flexibility', videoId: 'K56Z12XNQ5c' },
+    { id: '6', title: 'Upper Body Strength', videoId: 'l0CwCvJbGZI' },
+    { id: '7', title: 'Lower Body Workout', videoId: 'xpzMr3nSOIE' },
+    { id: '8', title: 'Zumba Dance Workout', videoId: 'ZNpCqF9XRqQ' },
+    { id: '9', title: 'Meditation for Stress Relief', videoId: 'inpok4MKVLM' },
+    { id: '10', title: 'Kickboxing Cardio', videoId: 'bEv6CCg2BC8' },
+    { id: '11', title: 'Bodyweight Exercises', videoId: 'UBMk30rjy0o' },
+    { id: '12', title: 'Stretching Routine', videoId: 'sTxC3J3gQEU' },
+    { id: '13', title: 'Abs Workout', videoId: '1919eTCoESo' },
+    { id: '14', title: 'Resistance Band Exercises', videoId: 'rXPLkz0cVoI' },
+    { id: '15', title: 'Cool Down and Relaxation', videoId: 'qULTwquOuT4' },
+  ]);
   const navigation = useNavigation();
 
-  useEffect(() => {
-    fetchMembershipType();
-  }, []);
-
-  const fetchMembershipType = async () => {
+  const fetchMembershipType = useCallback(async () => {
     try {
       const userData = await AsyncStorage.getItem('userData');
       if (userData) {
@@ -27,36 +40,45 @@ const VideosPage = () => {
     } catch (error) {
       console.error('Error fetching membership type:', error);
     }
-  };
+  }, []);
 
-  const videos = [
-    { id: '1', videoId: 'UBMk30rjy0o' },
-    { id: '2', videoId: 'ml6cT4AZdqI' },
-    { id: '3', videoId: 'vc1E5CfRfos' },
-    { id: '4', videoId: 'IODxDxX7oi4' },
-  ];
+  useFocusEffect(
+    useCallback(() => {
+      fetchMembershipType();
+      global.refreshVideosAccess = fetchMembershipType;
+      return () => {
+        global.refreshVideosAccess = null;
+      };
+    }, [fetchMembershipType])
+  );
 
-  const VideoComponent = ({ videoId }) => {
+  const VideoComponent = ({ videoId, title }) => {
     if (Platform.OS === 'web') {
       return (
-        <iframe
-          width="100%"
-          height="200"
-          src={`https://www.youtube.com/embed/${videoId}`}
-          frameBorder="0"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-        />
+        <View style={styles.videoContainer}>
+          <Text style={styles.videoTitle}>{title}</Text>
+          <iframe
+            width="100%"
+            height="200"
+            src={`https://www.youtube.com/embed/${videoId}`}
+            frameBorder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+        </View>
       );
     } else {
       return (
-        <WebView
-          style={styles.video}
-          javaScriptEnabled={true}
-          source={{
-            uri: `https://www.youtube.com/embed/${videoId}`,
-          }}
-        />
+        <View style={styles.videoContainer}>
+          <Text style={styles.videoTitle}>{title}</Text>
+          <WebView
+            style={styles.video}
+            javaScriptEnabled={true}
+            source={{
+              uri: `https://www.youtube.com/embed/${videoId}`,
+            }}
+          />
+        </View>
       );
     }
   };
@@ -85,9 +107,7 @@ const VideosPage = () => {
       <Text style={styles.header}>Workout Videos</Text>
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
         {videos.map((video) => (
-          <View key={video.id} style={styles.videoContainer}>
-            <VideoComponent videoId={video.videoId} />
-          </View>
+          <VideoComponent key={video.id} videoId={video.videoId} title={video.title} />
         ))}
       </ScrollView>
     </View>
@@ -118,6 +138,14 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
+    backgroundColor: '#fff',
+  },
+  videoTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    padding: 10,
+    backgroundColor: '#007BFF',
+    color: '#fff',
   },
   video: {
     width: ITEM_WIDTH,

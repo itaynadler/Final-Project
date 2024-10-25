@@ -4,7 +4,7 @@ import { Calendar } from 'react-native-calendars';
 import moment from 'moment';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 
 const SchedulePage = () => {
   const [workouts, setWorkouts] = useState([]);
@@ -14,6 +14,7 @@ const SchedulePage = () => {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const navigation = useNavigation();
 
   const formatDate = (dateString) => {
     if (!dateString) return '';
@@ -28,11 +29,6 @@ const SchedulePage = () => {
   useFocusEffect(
     useCallback(() => {
       fetchWorkouts();
-      global.refreshSchedules = fetchWorkouts;
-
-      return () => {
-        global.refreshSchedules = null;
-      };
     }, [])
   );
 
@@ -64,7 +60,10 @@ const SchedulePage = () => {
       if (response.ok) {
         setErrorMessage('');
         setSuccessMessage(data.message);
-        fetchWorkouts(); // Refresh workouts to update spots
+        fetchWorkouts(); // Refresh workouts immediately
+        if (global.refreshBookings) {
+          global.refreshBookings(); // Refresh bookings on the BookingsPage
+        }
         setTimeout(() => {
           setSuccessMessage('');
           setModalVisible(false);

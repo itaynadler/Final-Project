@@ -1,46 +1,42 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import moment from 'moment';
+import { useFocusEffect } from '@react-navigation/native';
 
 const HomeScreen = () => {
   const [firstName, setFirstName] = useState('');
   const [announcements, setAnnouncements] = useState([]);
   const [todayWorkouts, setTodayWorkouts] = useState([]);
 
-  useEffect(() => {
-    const getUserData = async () => {
-      try {
-        const userData = await AsyncStorage.getItem('userData');
-        if (userData) {
-          const { firstName, id } = JSON.parse(userData);
-          setFirstName(firstName);
-          fetchTodayWorkouts(id);
-        }
-      } catch (error) {
-        console.error('Error fetching user data:', error);
+  const fetchUserData = useCallback(async () => {
+    try {
+      const userData = await AsyncStorage.getItem('userData');
+      if (userData) {
+        const { firstName, id } = JSON.parse(userData);
+        setFirstName(firstName);
+        fetchTodayWorkouts(id);
       }
-    };
-
-    const fetchAnnouncements = async () => {
-      try {
-        const response = await fetch('http://localhost:3000/announcements');
-        const data = await response.json();
-        if (response.ok) {
-          setAnnouncements(data);
-        } else {
-          console.error('Failed to fetch announcements');
-        }
-      } catch (error) {
-        console.error('Error fetching announcements:', error);
-      }
-    };
-
-    getUserData();
-    fetchAnnouncements();
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+    }
   }, []);
 
-  const fetchTodayWorkouts = async (userId) => {
+  const fetchAnnouncements = useCallback(async () => {
+    try {
+      const response = await fetch('http://localhost:3000/announcements');
+      const data = await response.json();
+      if (response.ok) {
+        setAnnouncements(data);
+      } else {
+        console.error('Failed to fetch announcements');
+      }
+    } catch (error) {
+      console.error('Error fetching announcements:', error);
+    }
+  }, []);
+
+  const fetchTodayWorkouts = useCallback(async (userId) => {
     try {
       const today = moment().format('YYYY-MM-DD');
       const response = await fetch(`http://localhost:3000/workouts/user/${userId}?date=${today}`);
@@ -53,7 +49,14 @@ const HomeScreen = () => {
     } catch (error) {
       console.error('Error fetching today\'s workouts:', error);
     }
-  };
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchUserData();
+      fetchAnnouncements();
+    }, [fetchUserData, fetchAnnouncements])
+  );
 
   const renderAnnouncementItem = ({ item }) => (
     <View style={styles.messageBox}>
