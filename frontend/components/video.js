@@ -1,31 +1,18 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, Dimensions, ScrollView, Platform, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, ScrollView, Platform, TouchableOpacity, Alert } from 'react-native';
 import { WebView } from 'react-native-webview';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import Icon from 'react-native-vector-icons/Ionicons';
 
 const SLIDER_WIDTH = Dimensions.get('window').width;
 const ITEM_WIDTH = Math.round(SLIDER_WIDTH * 0.9);
 
 const VideosPage = () => {
   const [membershipType, setMembershipType] = useState('');
-  const [videos, setVideos] = useState([
-    { id: '1', title: 'Full Body HIIT Workout', videoId: 'ml6cT4AZdqI' },
-    { id: '2', title: 'Yoga for Beginners', videoId: 'v7AYKMP6rOE' },
-    { id: '3', title: '30-Minute Cardio Workout', videoId: 'CBWQGb4LyAM' },
-    { id: '4', title: 'Core Strength Training', videoId: 'DHD1-2P94DI' },
-    { id: '5', title: 'Pilates for Flexibility', videoId: 'K56Z12XNQ5c' },
-    { id: '6', title: 'Upper Body Strength', videoId: 'l0CwCvJbGZI' },
-    { id: '7', title: 'Lower Body Workout', videoId: 'xpzMr3nSOIE' },
-    { id: '8', title: 'Zumba Dance Workout', videoId: 'ZNpCqF9XRqQ' },
-    { id: '9', title: 'Meditation for Stress Relief', videoId: 'inpok4MKVLM' },
-    { id: '10', title: 'Kickboxing Cardio', videoId: 'bEv6CCg2BC8' },
-    { id: '11', title: 'Bodyweight Exercises', videoId: 'UBMk30rjy0o' },
-    { id: '12', title: 'Stretching Routine', videoId: 'sTxC3J3gQEU' },
-    { id: '13', title: 'Abs Workout', videoId: '1919eTCoESo' },
-    { id: '14', title: 'Resistance Band Exercises', videoId: 'rXPLkz0cVoI' },
-    { id: '15', title: 'Cool Down and Relaxation', videoId: 'qULTwquOuT4' },
-  ]);
+  const [videos, setVideos] = useState([]);
+  const [userId, setUserId] = useState(null);
+  const [showLovedOnly, setShowLovedOnly] = useState(false);
   const navigation = useNavigation();
 
   const fetchMembershipType = useCallback(async () => {
@@ -33,6 +20,7 @@ const VideosPage = () => {
       const userData = await AsyncStorage.getItem('userData');
       if (userData) {
         const { id } = JSON.parse(userData);
+        setUserId(id);
         const response = await fetch(`http://localhost:3000/user/${id}`);
         const data = await response.json();
         setMembershipType(data.membershipType);
@@ -52,35 +40,70 @@ const VideosPage = () => {
     }, [fetchMembershipType])
   );
 
-  const VideoComponent = ({ videoId, title }) => {
-    if (Platform.OS === 'web') {
-      return (
-        <View style={styles.videoContainer}>
-          <Text style={styles.videoTitle}>{title}</Text>
+  useEffect(() => {
+    fetchVideos();
+  }, [userId, showLovedOnly]);
+
+  const fetchVideos = async () => {
+    try {
+      const url = showLovedOnly ? `http://localhost:3000/videos/loved/${userId}` : 'http://localhost:3000/videos';
+      const response = await fetch(url);
+      const data = await response.json();
+      setVideos(data);
+    } catch (error) {
+      console.error('Error fetching videos:', error);
+      Alert.alert('Error', 'Failed to fetch videos');
+    }
+  };
+
+  const toggleLoveVideo = async (videoId) => {
+    try {
+      const response = await fetch(`http://localhost:3000/videos/${videoId}/toggle-love`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId }),
+      });
+      const data = await response.json();
+      fetchVideos();
+    } catch (error) {
+      console.error('Error toggling love status:', error);
+      Alert.alert('Error', 'Failed to update love status');
+    }
+  };
+
+  const VideoComponent = ({ video }) => {
+    const isLoved = video.lovedBy.includes(userId);
+
+    return (
+      <View style={styles.videoContainer}>
+        <View style={styles.videoHeader}>
+          <Text style={styles.videoTitle}>{video.title}</Text>
+          <TouchableOpacity onPress={() => toggleLoveVideo(video._id)}>
+            <Icon name={isLoved ? 'heart' : 'heart-outline'} size={24} color={isLoved ? 'red' : 'black'} />
+          </TouchableOpacity>
+        </View>
+        {Platform.OS === 'web' ? (
           <iframe
             width="100%"
             height="200"
-            src={`https://www.youtube.com/embed/${videoId}`}
+            src={`https://www.youtube.com/embed/${video.videoId}`}
             frameBorder="0"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
           />
-        </View>
-      );
-    } else {
-      return (
-        <View style={styles.videoContainer}>
-          <Text style={styles.videoTitle}>{title}</Text>
+        ) : (
           <WebView
             style={styles.video}
             javaScriptEnabled={true}
             source={{
-              uri: `https://www.youtube.com/embed/${videoId}`,
+              uri: `https://www.youtube.com/embed/${video.videoId}`,
             }}
           />
-        </View>
-      );
-    }
+        )}
+      </View>
+    );
   };
 
   if (membershipType === 'partial') {
@@ -105,9 +128,17 @@ const VideosPage = () => {
   return (
     <View style={styles.container}>
       <Text style={styles.header}>Workout Videos</Text>
+      <TouchableOpacity
+        style={styles.filterButton}
+        onPress={() => setShowLovedOnly(!showLovedOnly)}
+      >
+        <Text style={styles.filterButtonText}>
+          {showLovedOnly ? 'Show All Videos' : 'Show Loved Videos'}
+        </Text>
+      </TouchableOpacity>
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
         {videos.map((video) => (
-          <VideoComponent key={video.id} videoId={video.videoId} title={video.title} />
+          <VideoComponent key={video._id} video={video} />
         ))}
       </ScrollView>
     </View>
@@ -180,6 +211,24 @@ const styles = StyleSheet.create({
   upgradeButtonText: {
     color: '#fff',
     fontSize: 16,
+    fontWeight: 'bold',
+  },
+  videoHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 10,
+    backgroundColor: '#007BFF',
+  },
+  filterButton: {
+    backgroundColor: '#007BFF',
+    padding: 10,
+    borderRadius: 5,
+    marginBottom: 10,
+    alignSelf: 'center',
+  },
+  filterButtonText: {
+    color: '#fff',
     fontWeight: 'bold',
   },
 });
