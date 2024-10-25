@@ -3,8 +3,10 @@ import { View, Text, TextInput, StyleSheet, Alert, TouchableOpacity, ScrollView,
 import { Picker } from '@react-native-picker/picker';
 import { Calendar } from 'react-native-calendars';
 import { Ionicons } from '@expo/vector-icons';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { useNavigation } from '@react-navigation/native';
 
-const RegisterPage = ({navigation}) => {
+const RegisterPage = () => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [username, setUsername] = useState('');
@@ -14,6 +16,8 @@ const RegisterPage = ({navigation}) => {
   const [birthDate, setBirthDate] = useState('');
   const [membershipType, setMembershipType] = useState('full');
   const [showCalendar, setShowCalendar] = useState(false);
+
+  const navigation = useNavigation();
 
   const handleSubmit = async () => {
     if (password !== repeatPassword) {
@@ -42,7 +46,7 @@ const RegisterPage = ({navigation}) => {
 
       if (response.status === 201) {
         Alert.alert('Registration Successful', 'You have successfully registered!');
-        navigation.navigate('Login');
+        navigation.navigate('Payment'); // Navigate to PaymentPage after successful registration
       } else {
         Alert.alert('Registration Failed', data.message);
       }
@@ -51,15 +55,23 @@ const RegisterPage = ({navigation}) => {
     }
   };
 
-  const handleDateSelect = (day) => {
-    setBirthDate(day.dateString);
+  const handleDateChange = (event, selectedDate) => {
     setShowCalendar(false);
+    if (selectedDate) {
+      setBirthDate(selectedDate.toISOString().split('T')[0]);
+    }
   };
 
   const formatDate = (date) => {
     if (!date) return '';
     const [year, month, day] = date.split('-');
     return `${day}/${month}/${year}`;
+  };
+
+  // Add this new function
+  const handleDateSelect = (day) => {
+    setBirthDate(day.dateString);
+    setShowCalendar(false);
   };
 
   return (
@@ -124,7 +136,15 @@ const RegisterPage = ({navigation}) => {
         </Picker>
       </View>
       <TouchableOpacity style={styles.button} onPress={handleSubmit}>
-        <Text style={styles.buttonText}>Submit</Text>
+        <Text style={styles.buttonText}>Register</Text>
+      </TouchableOpacity>
+      
+      {/* New Payment Button */}
+      <TouchableOpacity 
+        style={[styles.button, styles.paymentButton]} 
+        onPress={() => navigation.navigate('Payment')}
+      >
+        <Text style={styles.buttonText}>Proceed to Payment</Text>
       </TouchableOpacity>
 
       <Modal visible={showCalendar} transparent={true} animationType="fade">
@@ -255,6 +275,10 @@ const styles = StyleSheet.create({
   closeButtonText: {
     color: '#fff',
     fontWeight: 'bold',
+  },
+  paymentButton: {
+    backgroundColor: '#28a745',
+    marginTop: 16,
   },
 });
 

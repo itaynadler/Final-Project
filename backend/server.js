@@ -5,9 +5,14 @@ const cors = require('cors');
 require('dotenv').config();
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
+const fetch = require('node-fetch');
 // Initialize express app
 const app = express();
 const port = process.env.PORT || 3000;
+
+// You can access the PayPal credentials like this:
+const paypalClientId = process.env.PAYPAL_CLIENT_ID;
+const paypalSecret = process.env.PAYPAL_SECRET;
 
 // Middleware
 app.use(cors());
@@ -417,4 +422,119 @@ app.get('/workouts/user/:userId', async (req, res) => {
 // Start the server
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
+});
+
+app.get('/paypal-client-id', (req, res) => {
+  res.json({ clientId: process.env.PAYPAL_CLIENT_ID });
+});
+
+app.post('/record-payment', async (req, res) => {
+  const { userId, paymentId, amount, description } = req.body;
+  try {
+    // Here you would typically save the payment details to your database
+    // For now, we'll just log it
+    console.log('Payment recorded:', { userId, paymentId, amount, description });
+    res.status(200).json({ message: 'Payment recorded successfully' });
+  } catch (error) {
+    console.error('Error recording payment:', error);
+    res.status(500).json({ message: 'Error recording payment' });
+  }
+});
+
+app.get('/paypal-access-token', async (req, res) => {
+  try {
+    const response = await fetch('https://api-m.sandbox.paypal.com/v1/oauth2/token', {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Accept-Language': 'en_US',
+        'Authorization': 'Basic ' + Buffer.from(process.env.PAYPAL_CLIENT_ID + ":" + process.env.PAYPAL_SECRET).toString('base64')
+      },
+      body: 'grant_type=client_credentials'
+    });
+
+    const data = await response.json();
+    res.json({ accessToken: data.access_token });
+  } catch (error) {
+    console.error('Error fetching PayPal access token:', error);
+    res.status(500).json({ message: 'Failed to get PayPal access token' });
+  }
+});
+
+// Add these new endpoints to your server.js
+
+app.post('/create-paypal-order', async (req, res) => {
+  try {
+    const { amount, currency } = req.body;
+    const accessToken = await getPayPalAccessToken();
+
+    const response = await fetch('https://api-m.sandbox.paypal.com/v2/checkout/orders', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`
+      },
+      body: JSON.stringify({
+        intent: "CAPTURE",
+        purchase_units: [
+          {
+            amount: {
+              currency_code: currency,
+              value: amount
+            }
+          }
+        ],
+        application_context: {
+          return_url: "http://localhost:3000/payment-success",
+          cancel_url: "http://localhost:3000/payment-cancel"
+        }
+      })
+    });
+
+    const orderData = await response.json();
+
+    if (response.ok) {
+      const approvalUrl = orderData.links.find(link => link.rel === "approve").href;
+      res.json({ approvalUrl });
+    } else {
+      throw new Error(orderData.message || 'Failed to create PayPal order');
+    }
+  } catch (error) {
+    console.error('Error creating PayPal order:', error);
+    res.status(500).json({ message: 'Failed to create PayPal order' });
+  }
+});
+
+app.post('/check-payment-status', async (req, res) => {
+  // In a real application, you would check the actual status of the payment
+  // For this example, we're just sending a mock response
+  res.json({ status: 'COMPLETED' });
+});
+
+// Helper function to get PayPal access token
+async function getPayPalAccessToken() {
+  const response = await fetch('https://api-m.sandbox.paypal.com/v1/oauth2/token', {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'Accept-Language': 'en_US',
+      'Authorization': 'Basic ' + Buffer.from(process.env.PAYPAL_CLIENT_ID + ":" + process.env.PAYPAL_SECRET).toString('base64')
+    },
+    body: 'grant_type=client_credentials'
+  });
+
+  const data = await response.json();
+  return data.access_token;
+}
+
+// Add these new routes to your server.js
+
+app.get('/payment-success', (req, res) => {
+  // Handle successful payment
+  res.send('Payment successful! You can close this window and return to the app.');
+});
+
+app.get('/payment-cancel', (req, res) => {
+  // Handle cancelled payment
+  res.send('Payment cancelled. You can close this window and return to the app.');
 });
