@@ -12,6 +12,9 @@ const ProfilePage = () => {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
+  const [originalMembershipType, setOriginalMembershipType] = useState('');
+
+  const navigation = useNavigation();
 
   useEffect(() => {
     fetchUserData();
@@ -25,6 +28,7 @@ const ProfilePage = () => {
         const response = await fetch(`http://localhost:3000/user/${id}`);
         const data = await response.json();
         setUserData(data);
+        setOriginalMembershipType(data.membershipType);
       }
     } catch (error) {
       console.error('Error fetching user data:', error);
@@ -46,35 +50,49 @@ const ProfilePage = () => {
       }
 
       const { id } = JSON.parse(storedUserData);
-      
-      const response = await fetch(`http://localhost:3000/user/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          phoneNumber: userData.phoneNumber,
-          birthDate: userData.birthDate,
-          membershipType: userData.membershipType,
-        }),
-      });
 
-      if (response.ok) {
-        setEditing(false);
-        // Refresh user data
-        fetchUserData();
-        // Notify VideosPage to update access
-        if (global.refreshVideosAccess) {
-          global.refreshVideosAccess();
-        }
-        // Navigate back to force a re-render of the tab navigator
-        navigation.navigate('Home');
+      if (originalMembershipType === 'partial' && userData.membershipType === 'full') {
+        // Redirect to PaymentPage for upgrade
+        navigation.navigate('Payment', {
+          membershipType: 'full',
+          amount: 50,
+          onPaymentSuccess: async () => {
+            await updateUserProfile(id);
+            Alert.alert('Upgrade Successful', 'Your membership has been upgraded to Full.');
+            setEditing(false);
+            fetchUserData();
+          }
+        });
       } else {
-        console.error('Failed to update user data');
+        await updateUserProfile(id);
+        setEditing(false);
+        Alert.alert('Profile Updated', 'Your profile has been successfully updated.');
       }
     } catch (error) {
-      console.error('Error updating user data:', error);
+      console.error('Error updating profile:', error);
+      Alert.alert('Error', 'Failed to update profile. Please try again.');
     }
+  };
+
+  const updateUserProfile = async (userId) => {
+    const response = await fetch(`http://localhost:3000/user/${userId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        phoneNumber: userData.phoneNumber,
+        birthDate: userData.birthDate,
+        membershipType: userData.membershipType,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to update profile');
+    }
+
+    // Refresh user data after update
+    fetchUserData();
   };
 
   const formatDate = (dateString) => {
@@ -95,8 +113,6 @@ const ProfilePage = () => {
     setUserData({ ...userData, birthDate: day.dateString });
     setShowCalendar(false);
   };
-
-  const navigation = useNavigation();
 
   const handleLogout = async () => {
     try {
