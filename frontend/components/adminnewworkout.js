@@ -240,7 +240,7 @@ const CreateWorkoutPage = () => {
           <View style={styles.successModalContent}>
             <Text style={styles.successModalText}>Workout created successfully!</Text>
             <TouchableOpacity style={styles.successModalButton} onPress={handleSuccessModalClose}>
-              <Text style={styles.successModalButtonText}>View in Schedule</Text>
+              <Text style={styles.successModalButtonText}>View Schedule</Text>
             </TouchableOpacity>
           </View>
         </View>
