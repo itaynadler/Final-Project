@@ -1,4 +1,3 @@
-// server.js
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
@@ -6,11 +5,10 @@ require('dotenv').config();
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const fetch = require('node-fetch');
-// Initialize express app
 const app = express();
 const port = process.env.PORT || 3000;
 
-// You can access the PayPal credentials like this:
+
 const paypalClientId = process.env.PAYPAL_CLIENT_ID;
 const paypalSecret = process.env.PAYPAL_SECRET;
 
@@ -28,19 +26,19 @@ const connectDB = async () => {
     console.log('MongoDB connected successfully');
   } catch (error) {
     console.error('MongoDB connection error:', error.message);
-    // Exit process with failure
+    
     process.exit(1);
   }
 };
 
-// Add admin user if it doesn't exist
+
 const createAdminUser = async () => {
   try {
     const adminUser = await User.findOne({ username: 'admin' });
     if (!adminUser) {
       const newAdminUser = new User({
         username: 'admin',
-        password: 'admin', // In a real application, use bcrypt to hash the password
+        password: 'admin', 
         isAdmin: true,
       });
       await newAdminUser.save();
@@ -55,22 +53,22 @@ connectDB().then(() => {
   createAdminUser();
 });
 
-// Add User model
+
 const User = require('./models/User');
 
-// Update the login route
+
 app.post('/login', async (req, res) => {
   const { username, password } = req.body;
 
   try {
-    const user = await User.findOne({ username, password }); // Compare plain text passwords
+    const user = await User.findOne({ username, password }); 
     if (user) {
       res.status(200).json({ 
         message: 'Login Successful', 
         user: { 
           id: user._id, 
           username: user.username, 
-          firstName: user.firstName, // Add firstName to the response
+          firstName: user.firstName, 
           isAdmin: user.isAdmin 
         } 
       });
@@ -83,7 +81,7 @@ app.post('/login', async (req, res) => {
   }
 });
 
-// Update the registration route
+
 app.post('/register', async (req, res) => {
   const { firstName, lastName, username, password, phoneNumber, birthDate, membershipType } = req.body;
 
@@ -97,7 +95,7 @@ app.post('/register', async (req, res) => {
       firstName,
       lastName,
       username,
-      password, // Store password as plain text (not recommended for production)
+      password, 
       phoneNumber,
       birthDate: new Date(birthDate),
       membershipType
@@ -111,15 +109,15 @@ app.post('/register', async (req, res) => {
   }
 });
 
-// Add this near the top of the file, with other imports
+
 const Workout = require('./models/Workout');
 const Announcement = require('./models/Announcement');
 const moment = require('moment');
 
-// Replace the mock workouts array with this line
+
 let workouts = [];
 
-// Update the endpoint to get all workouts
+
 app.get('/workouts', async (req, res) => {
   try {
     const workouts = await Workout.find().sort({ date: 1, time: 1 });
@@ -134,7 +132,7 @@ app.get('/workouts', async (req, res) => {
   }
 });
 
-// Update the endpoint to book a workout
+
 app.post('/book', async (req, res) => {
   const { workoutId, userId } = req.body;
 
@@ -169,7 +167,7 @@ app.post('/book', async (req, res) => {
   }
 });
 
-// Update the endpoint to get user's bookings
+
 app.get('/bookings/:userId', async (req, res) => {
   const userId = req.params.userId;
   try {
@@ -185,30 +183,29 @@ app.get('/bookings/:userId', async (req, res) => {
   }
 });
 
-// Sign-up route for workouts
+
 app.post('/signup', (req, res) => {
   const { workoutId } = req.body;
-  const userId = 'user123';  // Replace with actual logged-in user ID
+  const userId = 'user123';  
 
-  // Find the workout
+
   const workout = workouts.find(w => w.id === workoutId);
 
   if (!workout) {
     return res.status(404).json({ message: 'Workout not found' });
   }
 
-  // Check if the user is already signed up
   if (workout.attendees.includes(userId)) {
     return res.status(400).json({ message: 'You are already signed up for this workout' });
   }
 
-  // Sign up the user
+
   workout.attendees.push(userId);
 
   res.status(200).json({ message: `Successfully signed up for ${workout.title}` });
 });
 
-// Update the endpoint to delete a booking
+
 app.delete('/bookings/:userId/:workoutId', async (req, res) => {
   const { userId, workoutId } = req.params;
 
@@ -240,7 +237,7 @@ app.delete('/bookings/:userId/:workoutId', async (req, res) => {
   }
 });
 
-// Add a new route to create workouts (for admin use)
+
 app.post('/workouts', async (req, res) => {
   const { title, instructor, date, time, capacity } = req.body;
 
@@ -262,7 +259,7 @@ app.post('/workouts', async (req, res) => {
   }
 });
 
-// Update the existing route to fetch user data
+
 app.get('/user/:id', async (req, res) => {
   try {
     const user = await User.findById(req.params.id).select('-password');
@@ -285,7 +282,7 @@ app.get('/user/:id', async (req, res) => {
   }
 });
 
-// Add this new route to update user data
+
 app.put('/user/:id', async (req, res) => {
   try {
     const { phoneNumber, birthDate, membershipType } = req.body;
@@ -306,13 +303,13 @@ app.put('/user/:id', async (req, res) => {
   }
 });
 
-// Add this new route
+
 app.get('/membership-stats', async (req, res) => {
   try {
     const totalMembers = await User.countDocuments({ isAdmin: false });
     const membershipStats = await User.aggregate([
       {
-        $match: { isAdmin: false }  // Exclude admin users
+        $match: { isAdmin: false } 
       },
       {
         $group: {
@@ -339,7 +336,7 @@ app.get('/membership-stats', async (req, res) => {
   }
 });
 
-// Get all announcements
+
 app.get('/announcements', async (req, res) => {
   try {
     const announcements = await Announcement.find().sort({ createdAt: -1 });
@@ -349,7 +346,7 @@ app.get('/announcements', async (req, res) => {
   }
 });
 
-// Create a new announcement
+
 app.post('/announcements', async (req, res) => {
   const { message } = req.body;
   try {
@@ -361,7 +358,7 @@ app.post('/announcements', async (req, res) => {
   }
 });
 
-// Update an announcement
+
 app.put('/announcements/:id', async (req, res) => {
   const { id } = req.params;
   const { message } = req.body;
@@ -380,7 +377,7 @@ app.put('/announcements/:id', async (req, res) => {
   }
 });
 
-// Delete an announcement
+
 app.delete('/announcements/:id', async (req, res) => {
   const { id } = req.params;
   try {
@@ -394,13 +391,13 @@ app.delete('/announcements/:id', async (req, res) => {
   }
 });
 
-// Add this new endpoint
+
 app.get('/workouts/user/:userId', async (req, res) => {
   const { userId } = req.params;
   const { date } = req.query;
 
   try {
-    // Parse the date and create start/end of day
+
     const startOfDay = moment(date).startOf('day').toDate();
     const endOfDay = moment(date).endOf('day').toDate();
 
@@ -419,7 +416,7 @@ app.get('/workouts/user/:userId', async (req, res) => {
   }
 });
 
-// Start the server
+
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
 });
@@ -431,8 +428,7 @@ app.get('/paypal-client-id', (req, res) => {
 app.post('/record-payment', async (req, res) => {
   const { userId, paymentId, amount, description } = req.body;
   try {
-    // Here you would typically save the payment details to your database
-    // For now, we'll just log it
+
     console.log('Payment recorded:', { userId, paymentId, amount, description });
     res.status(200).json({ message: 'Payment recorded successfully' });
   } catch (error) {
@@ -461,7 +457,7 @@ app.get('/paypal-access-token', async (req, res) => {
   }
 });
 
-// Add these new endpoints to your server.js
+
 
 app.post('/create-paypal-order', async (req, res) => {
   try {
@@ -506,12 +502,11 @@ app.post('/create-paypal-order', async (req, res) => {
 });
 
 app.post('/check-payment-status', async (req, res) => {
-  // In a real application, you would check the actual status of the payment
-  // For this example, we're just sending a mock response
+
   res.json({ status: 'COMPLETED' });
 });
 
-// Helper function to get PayPal access token
+
 async function getPayPalAccessToken() {
   const response = await fetch('https://api-m.sandbox.paypal.com/v1/oauth2/token', {
     method: 'POST',
@@ -527,14 +522,86 @@ async function getPayPalAccessToken() {
   return data.access_token;
 }
 
-// Add these new routes to your server.js
+
 
 app.get('/payment-success', (req, res) => {
-  // Handle successful payment
+
   res.send('Payment successful! You can close this window and return to the app.');
 });
 
 app.get('/payment-cancel', (req, res) => {
-  // Handle cancelled payment
+
   res.send('Payment cancelled. You can close this window and return to the app.');
+});
+
+
+const Video = require('./models/Video');
+
+
+
+app.get('/videos', async (req, res) => {
+  try {
+    const videos = await Video.find();
+    res.json(videos);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching videos', error: error.message });
+  }
+});
+
+
+app.post('/videos', async (req, res) => {
+  try {
+    const { title, videoId } = req.body;
+    const newVideo = new Video({ title, videoId });
+    await newVideo.save();
+    res.status(201).json(newVideo);
+  } catch (error) {
+    res.status(500).json({ message: 'Error adding video', error: error.message });
+  }
+});
+
+
+app.delete('/videos/:id', async (req, res) => {
+  try {
+    await Video.findByIdAndDelete(req.params.id);
+    res.status(200).json({ message: 'Video deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error deleting video', error: error.message });
+  }
+});
+
+
+app.post('/videos/:id/toggle-love', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { userId } = req.body;
+
+    const video = await Video.findById(id);
+    if (!video) {
+      return res.status(404).json({ message: 'Video not found' });
+    }
+
+    const lovedIndex = video.lovedBy.indexOf(userId);
+    if (lovedIndex === -1) {
+      video.lovedBy.push(userId);
+    } else {
+      video.lovedBy.splice(lovedIndex, 1);
+    }
+
+    await video.save();
+    res.json({ loved: lovedIndex === -1 });
+  } catch (error) {
+    res.status(500).json({ message: 'Error toggling love status', error: error.message });
+  }
+});
+
+
+app.get('/videos/loved/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const lovedVideos = await Video.find({ lovedBy: userId });
+    res.json(lovedVideos);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching loved videos', error: error.message });
+  }
 });
