@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, Alert, TouchableOpacity } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
 
 const API_URL = 'http://localhost:3000';
 
-const LoginPage = ({ navigation }) => {
+const LoginPage = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [loginError, setLoginError] = useState(''); // New state for login error message
+
+  const navigation = useNavigation();
 
   const handleLogin = async () => {
     try {
@@ -21,26 +25,19 @@ const LoginPage = ({ navigation }) => {
       const data = await response.json();
 
       if (response.status === 200) {
-        
-        await AsyncStorage.setItem('userData', JSON.stringify({
-          id: data.user.id,
-          username: data.user.username,
-          firstName: data.user.firstName,
-          isAdmin: data.user.isAdmin
-        }));
-
-        Alert.alert('Login Successful', `Welcome, ${data.user.firstName}!`);
+        await AsyncStorage.setItem('userData', JSON.stringify(data.user));
+        setLoginError(''); // Clear any previous error message
         if (data.user.isAdmin) {
           navigation.navigate('Admin');
         } else {
           navigation.navigate('Home');
         }
       } else {
-        Alert.alert('Login Failed', data.message);
+        setLoginError('Invalid username or password'); // Set error message
       }
     } catch (error) {
-      console.error(error);
-      Alert.alert('Error', 'Something went wrong');
+      console.error('Login error:', error);
+      Alert.alert('Error', 'An error occurred during login');
     }
   };
 
@@ -68,6 +65,7 @@ const LoginPage = ({ navigation }) => {
       <TouchableOpacity style={styles.button} onPress={handleLogin}>
         <Text style={styles.buttonText}>Login</Text>
       </TouchableOpacity>
+      {loginError ? <Text style={styles.errorText}>{loginError}</Text> : null} {/* New error message */}
       <Text style={styles.regText}>New with us?</Text>
       <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
         <Text style={styles.registerButtonText}>Register now</Text>
@@ -129,7 +127,12 @@ const styles = StyleSheet.create({
     fontSize: 18,
     marginTop: 55, 
        
-  }
+  },
+  errorText: {
+    color: 'red',
+    textAlign: 'center',
+    marginTop: 10,
+  },
 });
 
 export default LoginPage;
