@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, Alert, TouchableOpacity } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_URL = 'http://localhost:3000'; // Replace with your actual backend URL
+const API_URL = 'http://localhost:3000';
 
 const LoginPage = ({ navigation }) => {
   const [username, setUsername] = useState('');
@@ -21,7 +21,7 @@ const LoginPage = ({ navigation }) => {
       const data = await response.json();
 
       if (response.status === 200) {
-        // Store user data in AsyncStorage
+        
         await AsyncStorage.setItem('userData', JSON.stringify({
           id: data.user.id,
           username: data.user.username,
@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: '#f5f5f5', // Lighter background color
+    backgroundColor: '#f5f5f5',
   },
   title: {
     fontSize: 28,
@@ -91,8 +91,8 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   input: {
-    width: 300, // Fixed width
-    height: 50, // Fixed height
+    width: 300, 
+    height: 50, 
     borderColor: '#cccccc',
     borderWidth: 1,
     marginBottom: 15,
@@ -102,11 +102,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   button: {
-    backgroundColor: '#007BFF', // Button color
+    backgroundColor: '#007BFF', 
     paddingVertical: 15,
     paddingHorizontal: 20,
     borderRadius: 8,
-    width: 200, // Width of the login button
+    width: 200, 
     alignItems: 'center',
     marginVertical: 10,
   },
@@ -116,13 +116,13 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   registerButton: {
-    marginTop: 15, // Margin to move it down
-    backgroundColor: 'transparent', // Transparent background
+    marginTop: 15, 
+    backgroundColor: 'transparent', 
   },
   registerButtonText: {
-    color: '#007BFF', // Text color for register button
+    color: '#007BFF', 
     fontSize: 16,
-    textDecorationLine: 'underline', // Underline text to make it look like a link
+    textDecorationLine: 'underline', 
   },
   regText: {
     color: '#007BFF',

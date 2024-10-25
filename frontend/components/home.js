@@ -1,13 +1,13 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/Ionicons';
-import HomeScreen from './homescreen'; // Import HomeScreen component
-import SchedulePage from './schedule'; // Import SchedulePage
-import VideosPage from './video'; // Placeholder for videos
-import ProfilePage from './profile'; // Placeholder for profile
-import BookingsPage from './BookingsPage'; // Import the new BookingsPage
+import HomeScreen from './homescreen'; 
+import SchedulePage from './schedule';
+import VideosPage from './video'; 
+import ProfilePage from './profile';
+import BookingsPage from './BookingsPage'; 
 
-// Placeholder components for other screens
+
 const Videos = () => (
   <VideosPage />
 );
@@ -16,7 +16,7 @@ const Profile = () => (
   <ProfilePage />
 );
 
-// Create the bottom tab navigator
+
 const Tab = createBottomTabNavigator();
 
 const HomePage = () => {

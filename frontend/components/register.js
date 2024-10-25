@@ -3,7 +3,6 @@ import { View, Text, TextInput, StyleSheet, Alert, TouchableOpacity, ScrollView,
 import { Picker } from '@react-native-picker/picker';
 import { Calendar } from 'react-native-calendars';
 import { Ionicons } from '@expo/vector-icons';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import { useNavigation } from '@react-navigation/native';
 
 const RegisterPage = () => {
@@ -14,7 +13,7 @@ const RegisterPage = () => {
   const [password, setPassword] = useState('');
   const [repeatPassword, setRepeatPassword] = useState('');
   const [birthDate, setBirthDate] = useState('');
-  const [membershipType, setMembershipType] = useState('full');
+  const [membershipType, setMembershipType] = useState('');
   const [showCalendar, setShowCalendar] = useState(false);
 
   const navigation = useNavigation();
@@ -49,7 +48,6 @@ const RegisterPage = () => {
       const data = await response.json();
 
       if (response.status === 201) {
-        // Registration successful, navigate to PaymentPage
         navigation.navigate('Payment', {
           membershipType,
           amount: getMembershipAmount(membershipType),
@@ -82,7 +80,6 @@ const RegisterPage = () => {
     return `${day}/${month}/${year}`;
   };
 
-  // Add this new function
   const handleDateSelect = (day) => {
     setBirthDate(day.dateString);
     setShowCalendar(false);
@@ -145,6 +142,7 @@ const RegisterPage = () => {
           style={styles.picker}
           onValueChange={(itemValue) => setMembershipType(itemValue)}
         >
+          <Picker.Item label="Select Membership Type" value="" />
           <Picker.Item label="Full Membership" value="full" />
           <Picker.Item label="Partial Membership" value="partial" />
         </Picker>
@@ -230,7 +228,7 @@ const styles = StyleSheet.create({
         outlineStyle: 'none',
         appearance: 'none',
         paddingHorizontal: 15,
-        paddingRight: 30, // Space for the dropdown arrow
+        paddingRight: 30,
       },
     }),
   },

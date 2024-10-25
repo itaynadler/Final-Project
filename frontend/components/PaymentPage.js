@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+
 
 const PaymentPage = ({ route, navigation }) => {
   const { onPaymentSuccess, membershipType, amount } = route.params;
@@ -39,10 +39,10 @@ const PaymentPage = ({ route, navigation }) => {
       const orderData = await response.json();
 
       if (response.ok) {
-        // Open PayPal in a new window/tab
+        // Open PayPal in a new window
         const paypalWindow = window.open(orderData.approvalUrl, 'PayPal', 'width=800,height=600');
 
-        // Poll to check if the PayPal window is closed
+        
         const pollTimer = setInterval(() => {
           if (paypalWindow.closed) {
             clearInterval(pollTimer);

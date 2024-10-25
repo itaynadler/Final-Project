@@ -45,14 +45,13 @@ const CreateWorkoutPage = () => {
 
       if (response.ok) {
         setShowSuccessModal(true);
-        // Clear input fields
         setTitle('');
         setInstructor('');
         setDate('');
         setTime('');
         setCapacity('');
         
-        // Trigger a global refresh for both admin and user schedules
+        
         if (global.refreshSchedules) {
           global.refreshSchedules();
         }
@@ -117,7 +116,6 @@ const CreateWorkoutPage = () => {
 
   const handleSuccessModalClose = () => {
     setShowSuccessModal(false);
-    // Navigate to AdminSchedule with the created workout's date
     navigation.navigate('AdminSchedule', { selectedDate: date });
   };
 

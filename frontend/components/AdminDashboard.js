@@ -65,8 +65,8 @@ const AdminDashboard = () => {
 
       if (response.ok) {
         Alert.alert('Success', 'Announcement created successfully');
-        setMessage(''); // Clear the input after sending
-        fetchAnnouncements(); // Refresh the announcements list
+        setMessage('');
+        fetchAnnouncements();
       } else {
         Alert.alert('Error', 'Failed to create the announcement');
       }

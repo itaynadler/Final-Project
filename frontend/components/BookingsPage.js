@@ -39,7 +39,7 @@ const BookingsPage = () => {
       });
       if (response.ok) {
         Alert.alert('Success', 'Booking cancelled successfully');
-        fetchBookings(); // Refresh the bookings list
+        fetchBookings();
       } else {
         Alert.alert('Error', 'Failed to cancel booking');
       }

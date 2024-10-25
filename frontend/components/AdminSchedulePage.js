@@ -55,7 +55,7 @@ const AdminSchedulePage = () => {
       });
       if (response.ok) {
         Alert.alert('Success', 'Workout deleted successfully');
-        fetchWorkouts(); // Refresh workouts
+        fetchWorkouts(); 
         setModalVisible(false);
       } else {
         Alert.alert('Error', 'Failed to delete workout');

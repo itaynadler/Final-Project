@@ -52,7 +52,7 @@ const ProfilePage = () => {
       const { id } = JSON.parse(storedUserData);
 
       if (originalMembershipType === 'partial' && userData.membershipType === 'full') {
-        // Redirect to PaymentPage for upgrade
+       
         navigation.navigate('Payment', {
           membershipType: 'full',
           amount: 50,
@@ -91,20 +91,20 @@ const ProfilePage = () => {
       throw new Error('Failed to update profile');
     }
 
-    // Refresh user data after update
+    
     fetchUserData();
   };
 
   const formatDate = (dateString) => {
     if (!dateString) return '';
     
-    // Check if the date is in ISO format (2024-10-23T00:00:00.000Z)
+    
     if (dateString.includes('T')) {
       const date = new Date(dateString);
       return `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
     }
     
-    // If it's already in YYYY-MM-DD format
+    
     const [year, month, day] = dateString.split('-');
     return `${day}/${month}/${year}`;
   };
@@ -276,7 +276,7 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: '#4CAF50', // Nice green color
+    backgroundColor: '#4CAF50',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 10,

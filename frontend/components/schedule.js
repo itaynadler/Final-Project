@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Modal, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Modal, ActivityIndicator } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import moment from 'moment';
 import { Ionicons } from '@expo/vector-icons';
@@ -60,9 +60,9 @@ const SchedulePage = () => {
       if (response.ok) {
         setErrorMessage('');
         setSuccessMessage(data.message);
-        fetchWorkouts(); // Refresh workouts immediately
+        fetchWorkouts(); 
         if (global.refreshBookings) {
-          global.refreshBookings(); // Refresh bookings on the BookingsPage
+          global.refreshBookings();
         }
         setTimeout(() => {
           setSuccessMessage('');
@@ -79,7 +79,6 @@ const SchedulePage = () => {
     }
   };
 
-  // Filter workouts based on selected date
   const filteredWorkouts = workouts.filter(workout => 
     moment(workout.date).format('YYYY-MM-DD') === selectedDate
   );
@@ -344,7 +343,7 @@ const styles = StyleSheet.create({
     borderColor: '#f5c6cb',
   },
   successContainer: {
-    backgroundColor: '#d4edda',  // Light green background for success messages
+    backgroundColor: '#d4edda',
     borderColor: '#c3e6cb',
   },
 });
