@@ -418,7 +418,7 @@ app.get('/workouts/user/:userId', async (req, res) => {
 
 
 app.listen(port, () => {
-  console.log(`Server running on http://localhost:${port}`);
+  console.log(`Server running on http://3.91.21.194:${port}`);
 });
 
 app.get('/paypal-client-id', (req, res) => {
@@ -481,8 +481,8 @@ app.post('/create-paypal-order', async (req, res) => {
           }
         ],
         application_context: {
-          return_url: "http://localhost:3000/payment-success",
-          cancel_url: "http://localhost:3000/payment-cancel"
+          return_url: "http://3.91.21.194:3000/payment-success",
+          cancel_url: "http://3.91.21.194:3000/payment-cancel"
         }
       })
     });

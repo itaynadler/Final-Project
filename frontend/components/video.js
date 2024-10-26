@@ -21,7 +21,7 @@ const VideosPage = () => {
       if (userData) {
         const { id } = JSON.parse(userData);
         setUserId(id);
-        const response = await fetch(`http://localhost:3000/user/${id}`);
+        const response = await fetch(`http://3.91.21.194:3000/user/${id}`);
         const data = await response.json();
         setMembershipType(data.membershipType);
       }
@@ -46,7 +46,7 @@ const VideosPage = () => {
 
   const fetchVideos = async () => {
     try {
-      const url = showLovedOnly ? `http://localhost:3000/videos/loved/${userId}` : 'http://localhost:3000/videos';
+      const url = showLovedOnly ? `http://3.91.21.194:3000/videos/loved/${userId}` : 'http://3.91.21.194:3000/videos';
       const response = await fetch(url);
       const data = await response.json();
       setVideos(data);
@@ -58,7 +58,7 @@ const VideosPage = () => {
 
   const toggleLoveVideo = async (videoId) => {
     try {
-      const response = await fetch(`http://localhost:3000/videos/${videoId}/toggle-love`, {
+      const response = await fetch(`http://3.91.21.194:3000/videos/${videoId}/toggle-love`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

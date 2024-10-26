@@ -25,7 +25,7 @@ const ProfilePage = () => {
       const storedUserData = await AsyncStorage.getItem('userData');
       if (storedUserData) {
         const { id } = JSON.parse(storedUserData);
-        const response = await fetch(`http://localhost:3000/user/${id}`);
+        const response = await fetch(`http://3.91.21.194:3000/user/${id}`);
         const data = await response.json();
         setUserData(data);
         setOriginalMembershipType(data.membershipType);
@@ -75,7 +75,7 @@ const ProfilePage = () => {
   };
 
   const updateUserProfile = async (userId) => {
-    const response = await fetch(`http://localhost:3000/user/${userId}`, {
+    const response = await fetch(`http://3.91.21.194:3000/user/${userId}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',

@@ -13,7 +13,7 @@ const AdminVideosPage = () => {
 
   const fetchVideos = async () => {
     try {
-      const response = await fetch('http://localhost:3000/videos');
+      const response = await fetch('http://3.91.21.194:3000/videos');
       const data = await response.json();
       setVideos(data);
     } catch (error) {
@@ -29,7 +29,7 @@ const AdminVideosPage = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:3000/videos', {
+      const response = await fetch('http://3.91.21.194:3000/videos', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -53,7 +53,7 @@ const AdminVideosPage = () => {
 
   const deleteVideo = async (id) => {
     try {
-      const response = await fetch(`http://localhost:3000/videos/${id}`, {
+      const response = await fetch(`http://3.91.21.194:3000/videos/${id}`, {
         method: 'DELETE',
       });
 

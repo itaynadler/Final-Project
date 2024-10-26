@@ -34,7 +34,7 @@ const SchedulePage = () => {
 
   const fetchWorkouts = async () => {
     try {
-      const response = await fetch('http://localhost:3000/workouts');
+      const response = await fetch('http://3.91.21.194:3000/workouts');
       const data = await response.json();
       setWorkouts(data);
     } catch (error) {
@@ -49,7 +49,7 @@ const SchedulePage = () => {
       const userData = await AsyncStorage.getItem('userData');
       const { id: userId } = JSON.parse(userData);
 
-      const response = await fetch('http://localhost:3000/book', {
+      const response = await fetch('http://3.91.21.194:3000/book', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -24,7 +24,7 @@ const HomeScreen = () => {
 
   const fetchAnnouncements = useCallback(async () => {
     try {
-      const response = await fetch('http://localhost:3000/announcements');
+      const response = await fetch('http://3.91.21.194:3000/announcements');
       const data = await response.json();
       if (response.ok) {
         setAnnouncements(data);
@@ -39,7 +39,7 @@ const HomeScreen = () => {
   const fetchTodayWorkouts = useCallback(async (userId) => {
     try {
       const today = moment().format('YYYY-MM-DD');
-      const response = await fetch(`http://localhost:3000/workouts/user/${userId}?date=${today}`);
+      const response = await fetch(`http://3.91.21.194:3000/workouts/user/${userId}?date=${today}`);
       const data = await response.json();
       if (response.ok) {
         setTodayWorkouts(data);

@@ -38,7 +38,7 @@ const AdminSchedulePage = () => {
 
   const fetchWorkouts = async () => {
     try {
-      const response = await fetch('http://localhost:3000/workouts');
+      const response = await fetch('http://3.91.21.194:3000/workouts');
       const data = await response.json();
       setWorkouts(data);
     } catch (error) {
@@ -50,7 +50,7 @@ const AdminSchedulePage = () => {
   const deleteWorkout = async (workoutId) => {
     setLoading(true);
     try {
-      const response = await fetch(`http://localhost:3000/workouts/${workoutId}`, {
+      const response = await fetch(`http://3.91.21.194:3000/workouts/${workoutId}`, {
         method: 'DELETE',
       });
       if (response.ok) {

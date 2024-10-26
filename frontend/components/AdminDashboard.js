@@ -21,7 +21,7 @@ const AdminDashboard = () => {
 
   const fetchClientData = async () => {
     try {
-      const response = await fetch('http://localhost:3000/membership-stats');
+      const response = await fetch('http://3.91.21.194:3000/membership-stats');
       const data = await response.json();
       if (response.ok) {
         setMembershipData(data.membershipStats);
@@ -36,7 +36,7 @@ const AdminDashboard = () => {
 
   const fetchAnnouncements = async () => {
     try {
-      const response = await fetch('http://localhost:3000/announcements');
+      const response = await fetch('http://3.91.21.194:3000/announcements');
       const data = await response.json();
       if (response.ok) {
         setAnnouncements(data);
@@ -55,7 +55,7 @@ const AdminDashboard = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:3000/announcements', {
+      const response = await fetch('http://3.91.21.194:3000/announcements', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -82,7 +82,7 @@ const AdminDashboard = () => {
     }
 
     try {
-      const response = await fetch(`http://localhost:3000/announcements/${editingAnnouncement._id}`, {
+      const response = await fetch(`http://3.91.21.194:3000/announcements/${editingAnnouncement._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -105,7 +105,7 @@ const AdminDashboard = () => {
 
   const deleteAnnouncement = async (id) => {
     try {
-      const response = await fetch(`http://localhost:3000/announcements/${id}`, {
+      const response = await fetch(`http://3.91.21.194:3000/announcements/${id}`, {
         method: 'DELETE',
       });
 

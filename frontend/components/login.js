@@ -3,7 +3,7 @@ import { View, Text, TextInput, StyleSheet, Alert, TouchableOpacity } from 'reac
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 
-const API_URL = 'http://localhost:3000';
+const API_URL = 'http://3.91.21.194:3000';
 
 const LoginPage = () => {
   const [username, setUsername] = useState('');

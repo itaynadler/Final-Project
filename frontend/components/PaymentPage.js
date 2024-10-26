@@ -13,7 +13,7 @@ const PaymentPage = ({ route, navigation }) => {
 
   const fetchPayPalClientId = async () => {
     try {
-      const response = await fetch('http://localhost:3000/paypal-client-id');
+      const response = await fetch('http://3.91.21.194:3000/paypal-client-id');
       const data = await response.json();
       setPaypalClientId(data.clientId);
     } catch (error) {
@@ -25,7 +25,7 @@ const PaymentPage = ({ route, navigation }) => {
   const handlePayment = async () => {
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:3000/create-paypal-order', {
+      const response = await fetch('http://3.91.21.194:3000/create-paypal-order', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -62,7 +62,7 @@ const PaymentPage = ({ route, navigation }) => {
 
   const handlePaymentCompletion = async () => {
     try {
-      const response = await fetch('http://localhost:3000/check-payment-status', {
+      const response = await fetch('http://3.91.21.194:3000/check-payment-status', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
